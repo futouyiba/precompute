@@ -1,0 +1,21 @@
+Keys: ['id', 'name', 'pondName', 'pondImg', 'unlockImg', 'spotImg', 'mapId', 'isShow', 'fishStockId', 'entryLevel', 'pondOrder', 'entryItem', 'OpenSpot', 'hypolimnionT']
+Content: {
+  "id": 301020000,
+  "name": "Noob_Lake",
+  "pondName": 301020000,
+  "pondImg": "bg_map_0002",
+  "unlockImg": "img_unlock_301020000",
+  "spotImg": "bg_map_0003",
+  "mapId": 101,
+  "isShow": 1,
+  "fishStockId": 301030102,
+  "entryLevel": 1,
+  "pondOrder": 1,
+  "entryItem": [
+    0
+  ],
+  "OpenSpot": [
+    1
+  ],
+  "hypolimnionT": 100
+}

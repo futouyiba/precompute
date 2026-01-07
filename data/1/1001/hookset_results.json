@@ -1,0 +1,1 @@
+{"1":{"id":1,"name":"低成功率","yValueRange":10,"hooksetSucRate":30,"unhookingProportion":30,"hooksetResult":1},"2":{"id":2,"name":"高成功率","yValueRange":50,"hooksetSucRate":100,"unhookingProportion":70,"hooksetResult":2},"3":{"id":3,"name":"完美","yValueRange":80,"hooksetSucRate":100,"unhookingProportion":100,"hooksetResult":4}}
