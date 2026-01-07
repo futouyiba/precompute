@@ -1,0 +1,126 @@
+{
+    "mapID": 1006001,
+    "timestamp": "2026-01-07 15:40:37",
+    "global": {
+        "name": "Global",
+        "type": "Global",
+        "format": "dense",
+        "blockSize": 0,
+        "dataFile": "Fishing_1006001_Global.npy",
+        "indexFile": "",
+        "blockCount": 0,
+        "origin": [
+            12.599998474121094,
+            -6.811878204345703,
+            -147.3000030517578
+        ],
+        "step": [
+            1.5,
+            1.0,
+            1.5
+        ],
+        "dim": [
+            134,
+            8,
+            134
+        ]
+    },
+    "locals": [
+        {
+            "name": "stock_sunset_zone_t4",
+            "type": "LocalStock",
+            "format": "dense",
+            "blockSize": 0,
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (3)_-2166.npy",
+            "indexFile": "",
+            "blockCount": 0,
+            "origin": [
+                79.24942779541016,
+                -4.447439193725586,
+                -92.52035522460938
+            ],
+            "step": [
+                0.5,
+                1.0,
+                0.5
+            ],
+            "dim": [
+                17,
+                5,
+                33
+            ]
+        },
+        {
+            "name": "stock_sunset_zone_t4",
+            "type": "LocalStock",
+            "format": "dense",
+            "blockSize": 0,
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (2)_-2156.npy",
+            "indexFile": "",
+            "blockCount": 0,
+            "origin": [
+                58.20930480957031,
+                -4.581302165985107,
+                -94.22565460205078
+            ],
+            "step": [
+                0.5,
+                1.0,
+                0.5
+            ],
+            "dim": [
+                47,
+                5,
+                37
+            ]
+        },
+        {
+            "name": "stock_sunset_zone_t4",
+            "type": "LocalStock",
+            "format": "dense",
+            "blockSize": 0,
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (1)_-2146.npy",
+            "indexFile": "",
+            "blockCount": 0,
+            "origin": [
+                163.55039978027345,
+                -4.432387351989746,
+                -35.378543853759769
+            ],
+            "step": [
+                0.5,
+                1.0,
+                0.5
+            ],
+            "dim": [
+                34,
+                5,
+                41
+            ]
+        },
+        {
+            "name": "stock_sunset_zone_t4",
+            "type": "LocalStock",
+            "format": "dense",
+            "blockSize": 0,
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4_-2136.npy",
+            "indexFile": "",
+            "blockCount": 0,
+            "origin": [
+                159.337890625,
+                -4.511614799499512,
+                -57.64599609375
+            ],
+            "step": [
+                0.5,
+                1.0,
+                0.5
+            ],
+            "dim": [
+                49,
+                5,
+                61
+            ]
+        }
+    ]
+}
