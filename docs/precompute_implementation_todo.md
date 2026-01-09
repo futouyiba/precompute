@@ -6,64 +6,47 @@
 
 以下逻辑已在 `0precomputeDemo.ipynb` 中实现：
 
+### 阶段一：数据采集与组装 (Ingestion & Assembly)
 - [x] **数据源与环境建立 (Setup)**
-    - 创建 `0precomputeDemo.ipynb` 作为实验环境。
-    - 引入 `pandas`, `numpy`, `json` 等基础库。
-
 - [x] **链式数据采集 (Chained Collection)**
     - [x] `SceneID` 解析与 `MapID` 查找 (`map_scene.json`)。
-    - [x] 关联 `Pond` 配置 (`fish_pond_list.json`)。
-    - [x] 关联 `Stock` 配置 (`fish_stock.json`)。
-    - [x] 遍历并展开 `Release` 配置 (`stock_release.json`, `fish_release.json`)。
-
+    - [x] 关联 `Pond` 配置与 `Stock` 配置。
+    - [x] 遍历 `Release` 配置。
 - [x] **鱼种数据组装 (Species Data Assembly)**
-    - [x] 构建 `stockFishesPd` DataFrame，每一行代表一个 Release 实例。
-    - [x] **亲和度数据关联 (Enrichment)**：
-        - 关联 `EnvAffinity` (`fish_env_affinity.json`)，提取 StructId, TempId, LayerId 等。
-        - 级联查找 `StructAffinity`, `TempAffinity`, `WaterLayerAffinity` 并回填至 DataFrame。
-        - 关联 `BaitAffinity` 与 `PeriodAffinity` (Bait/Period List)。
+    - [x] 构建 `stockFishesPd` DataFrame。
+    - [x] 级联查找与数据回填 (Env/Struct/Temp/Layer)。
+
+### 阶段二：核心批量计算 (Core Calculation)
+- [x] **数据矩阵化转换 (Matrix Conversion)**
+    - [x] 实现 DataFrame -> Dense Matrix (`StructMatrix`, `LayerMatrix`, `TempParams`) 的转换函数 `build_dense_matrices`。
+    - [x] 使用 `float16` 节省显存。
+- [x] **环境体素数据加载 (Voxel Data Loading)**
+    - [x] 读取 `Global.npy`。
+    - [x] 初步解析 `struct_slots` (Channel 0-2) 和 `depth_map` (Channel 3)。(注：Channel定义为Demo假设，需后续根据具体Format微调)。
+- [x] **核心亲和度计算 (Core Affinity Calculation)**
+    - [x] **StructAffinity**: 实现了基于 `Gather` + `Max` 的向量化计算。
+    - [x] **TempAffinity**: 实现了基于深度插值 + 高斯函数的向量化计算。
+    - [x] **Synthesis**: 实现了简单的广播乘法 (`EnvCoeff = AffStruct * AffTemp`)。
 
 ---
 
 ## 1. 待办逻辑 (Missing Logic - To Do)
 
-`technical_guide.md` 中定义的**核心批量计算 (Batch Calculation)** 尚未开始：
+### 1.1 验证与工程化 (Validation & Engineering)
+- [ ] **数值验证**: 检查输出的 `EnvCoeff` 是否在合理范围 (0.0 - 1.0)。
+- [ ] **形状对齐**: 确认 Voxel 坐标系 (X, Z) 与 Unity 如果有偏移需要处理。
+- [ ] **LayerAffinity**: 目前代码中尚未包含 `AffFeedLayer` 的计算（虽矩阵已准备），需补全。
+- [ ] **MinThreshold**: 尚未应用 `min_env_threshold` 截断。
 
-### 1.1 数据矩阵化转换 (Matrix Conversion)
-- [ ] **转换目标**：将 DataFrame 中的 `layerList` (List of Dict), `structList` 等字段转换为高效的 `numpy.ndarray` 查找表。
-- [ ] **决策 (2026-01-08)**：使用 **稠密矩阵 (Dense Matrix)**。
-    - `StructAffinityMatrix`: shape `[NumFishQualities, NumStructTypes]`, dtype `float16`
-    - `LayerAffinityMatrix`: shape `[NumFishQualities, NumLayerTypes]`, dtype `float16`
-    - `TempAffinityParams`: shape `[NumFishQualities, 3]` (Fav, Ratio, Threshold)
-
-### 1.2 环境体素数据加载 (Voxel Data Loading)
-- [ ] **加载逻辑**：实际读取 `Fishing_xxxx_Global.npy` 文件。
-- [ ] **解析逻辑**：根据 `VoxelMapDataFormat.md` 解析各 Channel/Bitmask (如 `struct_slots`, `depth_layer` 等)。
-- [ ] **对齐**：确保 Voxel 坐标系与计算网格对齐。
-
-### 1.3 核心亲和度计算 (Core Affinity Calculation)
-- [ ] **结构亲和度 (AffStruct)**
-    - 算法：`affStruct[x,y,z,f] = max_{slot} ( PrefStruct[f, struct_slots[x,y,z,slot]] )`
-    - 细节：处理 `struct_slots == -1` (空槽位) 的情况，避免索引越界。
-    - 决策：优先实现 **Plan A (Gather)**。
-- [ ] **温度亲和度 (AffTemp)**
-    - 算法：基于深度层 `y` 插值得到 `T_depth[y]`，再应用高斯公式计算亲和度。
-    - 公式：`exp( - (T - T_fav)^2 / (Width * Ratio^2) )`
-- [ ] **水层亲和度 (AffFeedLayer)**
-    - 算法：直接通过 `layer_id` 索引查找。
-
-### 1.4 广播与合成 (Broadcasting & Synthesis)
-- [ ] **合成公式**：`EnvCoeff = max( Π(Ci), min_env_threshold )`。
-- [ ] **最终权重**：`W = BaseWeight * EnvCoeff`。
-- [ ] **广播**：利用 NumPy Broadcasting 机制将 `(y, f)`, `(x, z, f)` 等维度的中间结果扩展到 `(x, y, z, f)`。
+### 1.2 长期规划 (Future)
+- [ ] **GPU 加速**: 迁移至 CuPy/Torch。
+- [ ] **流式处理**: 支持超大地图分块计算。
 
 ---
 
 ## 2. 也是决策与细化的技术细节 (Details & Decisions Log)
 
-### 2026-01-08 确认项
-- [x] **矩阵化方案**：使用 **稠密矩阵 (Dense Matrix)**，无需过度优化。
-- [x] **缺失数据的默认行为**：**严格报错 (Error Out)**，配置完整性必须保证。
-- [x] **内存管理策略**：统一使用 **`float16`**。
-    - 估算：`500x50x500x30` 规模下约 **715 MB**，无需分块。
-- [x] **min_env_threshold 来源**：**单鱼独立配置 (Per-Fish Config)**，非全局常量。
+- [x] **矩阵化方案**：稠密矩阵 (Dense Matrix)。
+- [x] **缺失数据处理**：严格报错 (Error Out)。
+- [x] **内存管理**：使用 `float16`。
+- [x] **阈值配置**：单鱼独立配置。
