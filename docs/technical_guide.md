@@ -268,6 +268,16 @@ EnvCoeff = max( Π Ci , min_env_threshold )
 
 ---
 
+### 2.4 Period Affinity DataFrame (Fish × Period)
+
+以 **DataFrame** 形式构建（**行=ReleaseId，列=Period信息**），用于建立鱼种与时段活跃度的关联：
+
+* `PeriodActivityFactor` (Fish × PeriodId)：时段活跃度系数
+
+> 该数据通过级联 `FishRelease -> StockRelease -> FishEnv -> PeriodAffinity` 获得。
+
+---
+
 3. ## 例子 A：结构亲和度（affStruct）
 
 ### 3.1 前置约束（v1 硬约束）

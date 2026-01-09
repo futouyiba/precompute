@@ -15,6 +15,8 @@
 - [x] **鱼种数据组装 (Species Data Assembly)**
     - [x] 构建 `stockFishesPd` DataFrame。
     - [x] 级联查找与数据回填 (Env/Struct/Temp/Layer)。
+    - [x] **时段亲和度 (Period Affinity)**: 实现四表级联 (`FishRelease` -> `Stock` -> `Env` -> `Period`) 并构建 DataFrame。
+
 
 ### 阶段二：核心批量计算 (Core Calculation)
 - [x] **数据矩阵化/DataFrame化 (Matrix/DataFrame Conversion)**
