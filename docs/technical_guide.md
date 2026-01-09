@@ -244,13 +244,13 @@ EnvCoeff = max( Π Ci , min_env_threshold )
 
 ---
 
-### 2.2 Species Scalars（鱼种标量习性）
+### 2.2 Species Scalars（鱼种标量 dataframe）
 
-以 **DataFrame** 形式管理，每个鱼种一行：
+以 **DataFrame** 形式管理，**行(Index)为鱼种(Release/Species)，列(Columns)为各项标量参数**：
 
-* `temperature_fav[f]`：最适温度
-* `temperature_affected_ratio[f]`：温度敏感系数
-* （可选）阈值：`T_min[f]`, `T_max[f]`
+* `temperature_fav`：最适温度
+* `temperature_affected_ratio`：温度敏感系数
+* （可选）阈值：`T_min`, `T_max`
 
 > 组装、管理时使用 DataFrame，进入计算内核前统一转换为 `ndarray`
 
@@ -258,13 +258,13 @@ EnvCoeff = max( Π Ci , min_env_threshold )
 
 ### 2.3 Species × Factor Matrices（鱼种 × 因子二维表）
 
-以 **NumPy ndarray（float32）** 参与计算的二维表：
+以 **DataFrame** 形式构建与检索（**行=鱼种，列=因子类型**），进入计算内核时转换为稠密 **ndarray (float16/32)**：
 
-* `PrefStruct[f, k]`：鱼种 × 结构类型 的结构偏好
-* `PrefFeedLayer[f, l]`：鱼种 × 水层类型 的觅食偏好
+* `PrefStruct` (Fish × StructType)：结构亲和度 DataFrame
+* `PrefFeedLayer` (Fish × LayerType)：水层亲和度 DataFrame
 * ……
 
-> 该类矩阵主要通过 **索引（gather）** 使用，而非 one-hot 或矩阵乘法
+> 该类数据在逻辑层为“查找表(DataFrame)”，在计算层转化为矩阵，通过 **索引（gather）** 使用。
 
 ---
 
