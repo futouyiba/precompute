@@ -45,6 +45,7 @@
 ### 1.2 长期规划 (Future)
 - [ ] **GPU 加速**: 迁移至 CuPy/Torch。
 - [ ] **流式处理**: 支持超大地图分块计算。
+- [ ] **鱼种关联关系 (Fish Relation DataFrame)**: 构建 DataFrame 映射 `fishQualityId` <-> `fishSpeciesId` 及对应名称 (Future/Low Priority).
 - [ ] **全局配置组装 (Global Assembly Optimization)**: 将 `Fish * Struct` 的 DataFrame 组装逻辑提升为全局一次性计算（全鱼种），避免针对每个 Pond/Stock 重复组装。
 
 ---
