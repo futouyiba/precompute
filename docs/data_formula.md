@@ -222,38 +222,86 @@
 
 ## 结构体 (Struct)
 
-| ID | 名称 (Name) | 描述 (Description) |
-| :--- | :--- | :--- |
-| 0 | OpenWater | [水下结构体]开放水域 |
-| 1 | Grass | [水下结构体]水草 |
-| 2 | Rock | [水下结构体]石头 |
-| 3 | Wood | [水下结构体]沉木 |
-| 4 | Bridge | [水下结构体]桥墩 |
-| 5 | Hole | [水下结构体]深坑 |
-| 6 | Ridge | [水下结构体]尖脊 |
-| 7 | Break | [水下结构体]断层 |
-| 8 | Ledge | [水下结构体]岩架 |
-| 9 | Bay | [水下结构体]湾子 |
-| 10 | Mud | [水下结构体]泥底 |
-| 11 | Gravel | [水下结构体]碎石底 |
+| ID | 名称 (Name) | 描述 (Description)   |
+| :- | :---------- | :------------------- |
+| 0  | OpenWater   | [水下结构体]开放水域 |
+| 1  | Grass       | [水下结构体]水草     |
+| 2  | Rock        | [水下结构体]石头     |
+| 3  | Wood        | [水下结构体]沉木     |
+| 4  | Bridge      | [水下结构体]桥墩     |
+| 5  | Hole        | [水下结构体]深坑     |
+| 6  | Ridge       | [水下结构体]尖脊     |
+| 7  | Break       | [水下结构体]断层     |
+| 8  | Ledge       | [水下结构体]岩架     |
+| 9  | Bay         | [水下结构体]湾子     |
+| 10 | Mud         | [水下结构体]泥底     |
+| 11 | Gravel      | [水下结构体]碎石底   |
 
 ## 水层 (Layer)
 
 | ID | 名称 (Name) | 描述 (Description) |
-| :--- | :--- | :--- |
-| 1 | Surface | [地图水层]表层 |
-| 2 | Middle | [地图水层]中层 |
-| 3 | Bottom | [地图水层]底层 |
+| :- | :---------- | :----------------- |
+| 1  | Surface     | [地图水层]表层     |
+| 2  | Middle      | [地图水层]中层     |
+| 3  | Bottom      | [地图水层]底层     |
 
 ## 时段 (Period)
 
-| ID | 标识 (Key) | 描述 (Description) |
-| :--- | :--- | :--- |
-| 101060001 | period6_9 | 6～9点时间段 |
-| 101060002 | period9_12 | 9～12点时间段 |
-| 101060003 | period12_15 | 12～15点时间段 |
-| 101060004 | period15_18 | 15～18点时间段 |
-| 101060005 | period18_21 | 18～21点时间段 |
-| 101060006 | period21_24 | 21～24点时间段 |
-| 101060007 | period0_3 | 0～3点时间段 |
-| 101060008 | period3_6 | 3～6点时间段 |
+| ID        | 标识 (Key)  | 描述 (Description) |
+| :-------- | :---------- | :----------------- |
+| 101060001 | period6_9   | 6～9点时间段       |
+| 101060002 | period9_12  | 9～12点时间段      |
+| 101060003 | period12_15 | 12～15点时间段     |
+| 101060004 | period15_18 | 15～18点时间段     |
+| 101060005 | period18_21 | 18～21点时间段     |
+| 101060006 | period21_24 | 21～24点时间段     |
+| 101060007 | period0_3   | 0～3点时间段       |
+| 101060008 | period3_6   | 3～6点时间段       |
+
+## 天气 (Weather)
+
+| ID        | 名称 (Name)                  | 描述          |
+| :-------- | :--------------------------- | :------------ |
+| 201230001 | SS_weather_sunny6_9          | 晴天 6-9点    |
+| 201230002 | SS_weather_sunny9_12         | 晴天 9-12点   |
+| 201230003 | SS_weather_sunny12_15        | 晴天 12-15点  |
+| 201230004 | SS_weather_sunny15_18        | 晴天 15-18点  |
+| 201230009 | SS_weather_cloudy6_9         | 多云 6-9点    |
+| 201230010 | SS_weather_cloudy9_12        | 多云 9-12点   |
+| 201230025 | SS_weather_fine_rain6_9      | 小雨 6-9点    |
+| 201230026 | SS_weather_fine_rain9_12     | 小雨 9-12点   |
+| 201230027 | SS_weather_fine_rain12_15    | 小雨 12-15点  |
+| 201230028 | SS_weather_fine_rain15_18    | 小雨 15-18点  |
+| 201230003 | NL_weather_sunny12_15        | 晴天 12-15点  |
+| 201230009 | NL_weather_cloudy6_9         | 多云 6-9点    |
+| 201230013 | NL_weather_cloudy18_21       | 多云 18-21点  |
+| 201230018 | NL_weather_overcast9_12      | 阴天 9-12点   |
+| 201230022 | NL_weather_overcast21_0      | 阴天 21-0点   |
+| 201230025 | NL_weather_fine_rain6_9      | 小雨 6-9点    |
+| 201230028 | NL_weather_fine_rain15_18    | 小雨 15-18点  |
+| 201230034 | NL_weather_moderate_rain9_12 | 中雨 9-12点   |
+| 201230039 | NL_weather_moderate_rain0_3  | 中雨 0-3点    |
+| 201230043 | NL_weather_heavy_rain12_15   | 大雨 12-15点  |
+| 201230045 | NL_weather_heavy_rain18_21   | 大雨 18-21点  |
+| 201230049 | NL_weather_stormy6_9         | 暴雨 6-9点    |
+| 201230054 | NL_weather_stormy21_0        | 暴雨 21-0点   |
+| 201230058 | NL_weather_thunderstorm9_12  | 雷阵雨 9-12点 |
+| 201230064 | NL_weather_thunderstorm3_6   | 雷阵雨 3-6点  |
+
+# voxel数据当中的bitmask
+
+    private const int FLAG_WATER = 1 << 0;
+    private const int FLAG_WATER_GRASS = 1 << 1;
+    private const int FLAG_STONE = 1 << 2;
+    private const int FLAG_DRIFTWOOD = 1 << 3;
+    private const int FLAG_PIER = 1 << 4;
+    private const int FLAG_DEEP_PIT = 1 << 5;
+    private const int FLAG_RIDGE = 1 << 6;
+    private const int FLAG_FAULT = 1 << 7;
+    private const int FLAG_ROCK_SHELF = 1 << 8;
+    private const int FLAG_BAY = 1 << 9;
+    private const int FLAG_MUD = 1 << 10;
+    private const int FLAG_GRAVEL = 1 << 11;
+
+
+注意：其他的结构体都是有flag则代表这里有这种结构体；唯独开放水域的逻辑不一样。只有不含其他所有结构、且具有flag water的时候，才算做 open water开放水域结构。
