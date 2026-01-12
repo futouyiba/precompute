@@ -2,113 +2,113 @@
     {
         "id": 20000,
         "name": "Weather_Pattern_0",
-        "temperature": 202.7,
-        "pressure_influence": 91.6,
-        "periodId": 101060006
+        "temperature": 198.6,
+        "pressure_influence": 103.6,
+        "periodId": 101060005
     },
     {
         "id": 20001,
         "name": "Weather_Pattern_1",
-        "temperature": 240.7,
-        "pressure_influence": 96.7,
-        "periodId": 101060003
+        "temperature": 294.5,
+        "pressure_influence": 100.6,
+        "periodId": 101060001
     },
     {
         "id": 20002,
         "name": "Weather_Pattern_2",
-        "temperature": 272.7,
-        "pressure_influence": 112.0,
-        "periodId": 101060002
+        "temperature": 179.9,
+        "pressure_influence": 80.4,
+        "periodId": 101060007
     },
     {
         "id": 20003,
         "name": "Weather_Pattern_3",
-        "temperature": 194.4,
-        "pressure_influence": 111.0,
-        "periodId": 101060002
+        "temperature": 222.1,
+        "pressure_influence": 119.6,
+        "periodId": 101060007
     },
     {
         "id": 20004,
         "name": "Weather_Pattern_4",
-        "temperature": 248.0,
-        "pressure_influence": 92.9,
-        "periodId": 101060004
+        "temperature": 158.9,
+        "pressure_influence": 112.6,
+        "periodId": 101060008
     },
     {
         "id": 20005,
         "name": "Weather_Pattern_5",
-        "temperature": 220.4,
-        "pressure_influence": 82.9,
-        "periodId": 101060002
+        "temperature": 199.5,
+        "pressure_influence": 107.5,
+        "periodId": 101060008
     },
     {
         "id": 20006,
         "name": "Weather_Pattern_6",
-        "temperature": 256.7,
-        "pressure_influence": 97.8,
-        "periodId": 101060004
+        "temperature": 181.9,
+        "pressure_influence": 89.9,
+        "periodId": 101060001
     },
     {
         "id": 20007,
         "name": "Weather_Pattern_7",
-        "temperature": 152.4,
-        "pressure_influence": 95.7,
-        "periodId": 101060006
+        "temperature": 230.3,
+        "pressure_influence": 89.1,
+        "periodId": 101060002
     },
     {
         "id": 20008,
         "name": "Weather_Pattern_8",
-        "temperature": 166.4,
-        "pressure_influence": 86.6,
-        "periodId": 101060008
+        "temperature": 219.6,
+        "pressure_influence": 87.7,
+        "periodId": 101060006
     },
     {
         "id": 20009,
         "name": "Weather_Pattern_9",
-        "temperature": 179.8,
-        "pressure_influence": 104.0,
-        "periodId": 101060005
+        "temperature": 282.2,
+        "pressure_influence": 97.5,
+        "periodId": 101060008
     },
     {
         "id": 20010,
         "name": "Weather_Pattern_10",
-        "temperature": 179.1,
-        "pressure_influence": 119.7,
-        "periodId": 101060007
+        "temperature": 200.4,
+        "pressure_influence": 109.2,
+        "periodId": 101060003
     },
     {
         "id": 20011,
         "name": "Weather_Pattern_11",
-        "temperature": 193.8,
-        "pressure_influence": 119.8,
-        "periodId": 101060004
+        "temperature": 295.6,
+        "pressure_influence": 91.1,
+        "periodId": 101060008
     },
     {
         "id": 20012,
         "name": "Weather_Pattern_12",
-        "temperature": 289.1,
-        "pressure_influence": 113.0,
-        "periodId": 101060006
+        "temperature": 202.7,
+        "pressure_influence": 93.2,
+        "periodId": 101060003
     },
     {
         "id": 20013,
         "name": "Weather_Pattern_13",
-        "temperature": 240.7,
-        "pressure_influence": 111.3,
+        "temperature": 186.3,
+        "pressure_influence": 96.2,
         "periodId": 101060006
     },
     {
         "id": 20014,
         "name": "Weather_Pattern_14",
-        "temperature": 285.1,
-        "pressure_influence": 84.7,
+        "temperature": 300.0,
+        "pressure_influence": 82.1,
         "periodId": 101060008
     },
     {
         "id": 20015,
         "name": "Weather_Pattern_15",
-        "temperature": 194.8,
-        "pressure_influence": 119.4,
-        "periodId": 101060008
+        "temperature": 272.7,
+        "pressure_influence": 96.3,
+        "periodId": 101060007
     }
 ]

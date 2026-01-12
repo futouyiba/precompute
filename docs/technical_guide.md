@@ -414,4 +414,37 @@ W = BaseWeight[f] * EnvCoeff
   * 组合 key 扩展到更多离散环境变量
 
 > v1 的目标是： **语义清晰、计算可控、结构可扩展** 。
->
+
+---
+
+7. ## 全局聚合与空间映射 (Global Aggregation)
+
+### 7.1 多层级空间数据 (Multi-Level Spatial Data)
+
+系统数据被组织为两级结构：
+*   **Global Map**：全域基础地形与数据 (Low Res/Base)。
+*   **Local Stock Map**：特定鱼群的活动区域 (High Res/Detail)，通常覆盖 Global 的一部分。
+
+数据源由 `map_data.json` 统一描述，关键元数据包括：
+*   `origin` (x, y, z): 真实世界坐标原点
+*   `step` (dx, dy, dz): 体素步长
+*   `dim` (nx, ny, nz): 维度
+
+### 7.2 聚合逻辑 (Aggregation Logic)
+
+为了生成最终的全局环境场，采用了 **Overlay (叠加)** 策略：
+
+1.  **独立计算**：对 Global Chunk 和每个 Local Chunk，分别调用通用的 `Core Calculation` 函数，计算得到各自的 `Biomass Tensor`。
+2.  **坐标映射**：
+    依循 `Local Index -> World Pos -> Global Index` 的路径：
+    ```python
+    WorldPos = LocalOrigin + LocalIndex * LocalStep
+    GlobalIndex = (WorldPos - GlobalOrigin) / GlobalStep
+    ```
+3.  **融合 (Fusion)**：
+    将映射后的 Local Biomass 叠加到 Global Canvas 上。
+    *   *v1 原型*: 采用 Center Projection + Sum/Max 策略。
+    *   *v2 优化*: 可引入插值 (Trilinear Interpolation) 或精确的体素重采样 (Voxel Resampling)。
+
+这一机制确保了即使 Local 数据与 Global 数据的分辨率或原点不同，也能在统一的世界坐标系下正确呈现。
+

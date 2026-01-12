@@ -39,8 +39,21 @@
 - [ ] **数值验证**: 检查输出的 `EnvCoeff` 是否在合理范围 (0.0 - 1.0)。
 - [ ] **Bitmask Mapping 验证**: 确认 `struct_affinity.json` 中的 StructType ID (0-11) 是否严格对应 Voxel Bitmask 的 Bit 0-11。
 - [ ] **坐标系对齐**: Unity (X, Y, Z) vs NumPy (Dim0, Dim1, Dim2)。通常 Unity Y 是 Up，NumPy Dim1 是 Y。需验证方向是否一致 (Top vs Bottom)。
-- [ ] **LayerAffinity**: 目前代码中尚未包含 `AffFeedLayer` 的计算（需从 Y 轴推导 LayerID）。
-- [ ] **MinThreshold**: 尚未应用 `min_env_threshold` 截断。
+- [x] **LayerAffinity**: 已实现基础 Y-Axis 映射计算 (Cell 18).
+- [x] **MinThreshold**: 已在 Synthesis 阶段应用 `minEnvCoeff` 截断 (Cell 22).
+
+### 1.3 阶段三：数据导出与可视化重构 (Data Export & Visualization Refactor)
+- [x] **数据加载重构 (Data Loading Refactor)** (2026-01-10)
+    - [x] 解析 `map_data.json` 获取 Global 和 Local NPY 路径及元数据 (Origin, Step, Dim).
+    - [x] 移除硬编码路径，完全由 JSON 驱动.
+    - [x] **可视化单点验证**: 实现对单个 Local Stock NPY 的 3D 可视化.
+- [x] **全局聚合 (Global Aggregation)** (2026-01-10)
+    - [x] 实现 Coordinate Mapping: Local Voxel (i,j,k) -> World Pos -> Global Voxel (u,v,w).
+    - [x] **逻辑重构**: 将 Core Calculation 封装为 `calculate_biomass_for_chunk` 函数，支持多 Chunk 并行/串行计算。
+    - [x] **可视化聚合**: 在可视化层将 Local Biomass (叠加/均值填充) 到 Global Base 图层。
+- [ ] **序列化导出 (Serialization)**:
+    - [ ] 将计算结果 (Biomass Tensor) 导出为二进制或 Protobuf 格式.
+    - [ ] 生成配套的 JSON 元数据文件 (Offset, Size, Timestamp).
 
 ### 1.2 长期规划 (Future)
 - [ ] **GPU 加速**: 迁移至 CuPy/Torch。
