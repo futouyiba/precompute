@@ -1,0 +1,28 @@
+--- Debug Calculation for Species 1010081 @ [0,6,31] ---
+Inputs: Bitmask=1, BaitDepth=24.00, WaterDepth=7.00
+Temps: Surface=20.0, Bottom=10.0
+1. TempAffinity (Id 2020200): 0.0000
+   - Profile: Fav=0, Threshold=0
+2. StructAffinity (Id 2010210): 1.0000
+3. LayerAffinity (Id 2030210): 0.6000
+4. WeatherAffinity: 1.0000
+5. PeriodActivity: 1.0000
+Raw EnvCoeff: 0.000000
+Final EnvCoeff (Min 0): 0.000000
+  - Species 1010081: Weight Factor = 0.0000
+--- Debug Calculation for Species 1010063 @ [0,6,31] ---
+Inputs: Bitmask=1, BaitDepth=24.00, WaterDepth=7.00
+Temps: Surface=20.0, Bottom=10.0
+1. TempAffinity (Id 2020200): 0.0000
+   - Profile: Fav=0, Threshold=0
+2. StructAffinity (Id 2010210): 1.0000
+3. LayerAffinity (Id 2030210): 0.6000
+4. WeatherAffinity: 1.0000
+5. PeriodActivity: 1.0000
+Raw EnvCoeff: 0.000000
+Final EnvCoeff (Min 0): 0.000000
+  - Species 1010063: Weight Factor = 0.0000
+--- Debug Calculation for Species 1010082 @ [0,6,31] ---
+Inputs: Bitmask=1, BaitDepth=24.00, WaterDepth=7.00
+Temps: Surface=20.0, Bottom=10.0
+1. TempAffinity (Id 2020200): 0.0000
