@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace FishWeightPrecomputer
         {
             try
             {
-                Console.WriteLine("Starting Fish Weight Precomputer...");
+                Console.WriteLine("Starting Fish Weight Precomputer (Dynamic Map ID)...");
                 
                 // 1. Setup Paths
                 // Use current directory to find the root "precompute" folder
@@ -79,19 +80,45 @@ namespace FishWeightPrecomputer
                     fishEnvAffinities
                 );
 
-                // 4. Identify Active Species for this Map
-                // Assuming MapId 1001? (From path).
-                int mapId = 1001; // Or derived from map_basic
-                if (mapBasic != null) mapId = mapBasic.Id;
+                // 4. Determine Map ID dynamically
+                // Logic: map_data.json -> global.dataFile -> sceneId -> map_scene.json -> mapId
+
+                // Load map_data.json first
+                string mapDataJsonPath = Path.Combine(rootPath, @"Fishing_1006001_Dense_20260107_154037\map_data.json");
+                if (!File.Exists(mapDataJsonPath))
+                {
+                    Console.WriteLine($"Error: map_data.json not found at {mapDataJsonPath}");
+                    return;
+                }
+
+                string mapDataJson = File.ReadAllText(mapDataJsonPath);
+                var mapDataConfig = System.Text.Json.JsonSerializer.Deserialize<MapDataConfig>(mapDataJson);
+                var origin = mapDataConfig.Global.Origin;
+                var step = mapDataConfig.Global.Step;
+                Console.WriteLine($"Loaded map_data.json: Origin=[{origin[0]}, {origin[1]}, {origin[2]}]");
+
+                // Extract SceneID from Global DataFile (e.g. "Fishing_1006001_Global.npy" -> "1006001")
+                string globalNpyFile = mapDataConfig.Global.DataFile; // "Fishing_1006001_Global.npy"
+                string sceneIdStr = globalNpyFile.Split('_')[1]; // Assumes format Fishing_{ID}_...
+                Console.WriteLine($"Extracted SceneID (AssetId): {sceneIdStr}");
+
+                // Load map_scene.json and resolve MapID
+                var mapScenesRaw = dataLoader.LoadJson<Dictionary<string, MapSceneInfo>>("map_scene.json");
+                var mapSceneInfo = mapScenesRaw.Values.FirstOrDefault(m => m.AssetId == sceneIdStr);
                 
-                Console.WriteLine($"Map ID: {mapId}");
-                
+                if (mapSceneInfo == null)
+                {
+                    Console.WriteLine($"Error: Could not find Map Scene info for AssetId {sceneIdStr}");
+                    return;
+                }
+
+                int mapId = mapSceneInfo.Id;
+                Console.WriteLine($"Resolved Map ID: {mapId} (from SceneID {sceneIdStr})");
+
+                // Filter Active Species
                 var activePonds = fishPondsRaw.Values.Where(p => p.MapId == mapId).ToList();
-                var activeSpecies = new HashSet<int>(); // Set of FishEnvIds
+                var activeSpecies = new HashSet<int>(); 
                 
-                // Map: FishEnvId -> (ProbWeight, MinEnvCoeff) - Simplifying: taking avg or first?
-                // Actually weight calc uses Release Data.
-                // We'll store ReleaseInfo per FishEnvId.
                 var activeReleases = new List<StockRelease>();
 
                 foreach (var pond in activePonds)
@@ -101,14 +128,17 @@ namespace FishWeightPrecomputer
                     {
                         activeReleases.Add(sr);
                         activeSpecies.Add(sr.FishEnvId);
-                        Console.WriteLine($"Found active FishEnvId: {sr.FishEnvId} in Stock {sr.StockId}");
+                        // Console.WriteLine($"Found active FishEnvId: {sr.FishEnvId} in Stock {sr.StockId}");
                     }
                 }
                 
                 Console.WriteLine($"Total active FishEnvIds: {activeSpecies.Count}");
 
-                // 5. Load Map Data (NPY)
-                string npyPath = Path.Combine(rootPath, @"Fishing_1006001_Dense_20260107_154037\Fishing_1006001_Global.npy");
+                // Origin/Step already loaded
+                string? mapDir = Path.GetDirectoryName(mapDataJsonPath);
+                if (mapDir == null) return;
+                string npyPath = Path.Combine(mapDir, mapDataConfig.Global.DataFile);
+
                 if (!File.Exists(npyPath))
                 {
                     Console.WriteLine($"NPY file not found at: {npyPath}");
@@ -130,29 +160,7 @@ namespace FishWeightPrecomputer
                 string periodKey = "period9_12"; 
                 double weatherWaterTemp = 20.0;
                 double bottomTemp = 10.0;
-                
-                // Origin/Step from map_data.json
-                string mapDataJsonPath = Path.Combine(rootPath, @"Fishing_1006001_Dense_20260107_154037\map_data.json");
-                MapDataConfig mapDataConfig = null;
-                float[] origin;
-                float[] step;
-                
-                if (File.Exists(mapDataJsonPath))
-                {
-                    string mapDataJson = File.ReadAllText(mapDataJsonPath);
-                    mapDataConfig = System.Text.Json.JsonSerializer.Deserialize<MapDataConfig>(mapDataJson);
-                    origin = mapDataConfig.Global.Origin;
-                    step = mapDataConfig.Global.Step;
-                    Console.WriteLine($"Loaded map_data.json: Origin=[{origin[0]}, {origin[1]}, {origin[2]}], Step=[{step[0]}, {step[1]}, {step[2]}]");
-                }
-                else
-                {
-                    // Fallback to default values
-                    Console.WriteLine("Warning: map_data.json not found, using default Origin/Step");
-                    origin = new float[] { -500f, -20f, -500f };
-                    step = new float[] { 1f, 0.5f, 1f };
-                }
-                
+
                 // Constants from MapBasic
                 double waterMinZ = mapBasic?.WaterMinZ ?? -20.0;
                 double waterMaxZ = mapBasic?.WaterMaxZ ?? 0.0; 

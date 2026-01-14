@@ -1,3 +1,4 @@
+#nullable disable
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -226,5 +227,14 @@ namespace FishWeightPrecomputer
 
         [JsonPropertyName("dim")]
         public int[] Dim { get; set; }
+    }
+
+    public class MapSceneInfo
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; } // This is MapID
+
+        [JsonPropertyName("assetId")]
+        public string AssetId { get; set; } // This is SceneID (string in JSON)
     }
 }

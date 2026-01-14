@@ -14,15 +14,13 @@ npm run dev
 
 ## 数据准备
 
-### 方式一：使用 Mock 数据测试
+转换真实的 `weights.bin`：
 ```bash
-python generate_mock_data.py
+node convert_weights.cjs
 ```
 
-### 方式二：转换真实的 weights.bin
-```bash
-python convert_weights.py ../weights.bin public/data
-```
+> [!NOTE]
+> 脚本会从上一级目录读取 `weights.bin` 和 `species_mapping.json`，并将生成的文件输出到 `public/data` 目录。
 
 ## 功能特性
 
