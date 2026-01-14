@@ -217,7 +217,7 @@ namespace FishWeightPrecomputer
                             x, y, z,
                             baitDepth, waterDepth, bitmask,
                             weatherId, periodKey,
-                            1.0, 
+                            fishRelease.ProbWeightIdeal, 
                             fishRelease.MinEnvCoeff,
                             weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ
                         );
