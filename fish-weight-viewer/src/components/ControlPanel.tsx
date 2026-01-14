@@ -81,13 +81,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             {/* Y 高度层选择 (仅 2D 模式) */}
             {control.viewMode === '2D' && (
                 <section>
-                    <h3>Y Layer (Depth): {control.zSlice}</h3>
+                    <h3>Y Layer (Depth): {control.ySlice}</h3>
                     <input
                         type="range"
                         min={0}
                         max={meta ? meta.dims.y - 1 : 0}
-                        value={control.zSlice}
-                        onChange={e => onChange({ zSlice: parseInt(e.target.value) })}
+                        value={control.ySlice}
+                        onChange={e => onChange({ ySlice: parseInt(e.target.value) })}
                         style={{ width: '100%' }}
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8em', color: '#666' }}>

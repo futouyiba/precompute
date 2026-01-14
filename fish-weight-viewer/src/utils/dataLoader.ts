@@ -11,7 +11,7 @@ const VOLUME_CACHE_SIZE = 8;
 // Y-slice 缓存
 const sliceCache = new LRUCache<CacheKey, Float32Array>(
     SLICE_CACHE_SIZE,
-    (k) => `y${k.z}_f${k.fishId}`  // z 参数现在表示 Y 层
+    (k) => `y${k.y}_f${k.fishId}`  // y 参数表示 Y 层
 );
 
 // Volume 缓存
@@ -44,7 +44,7 @@ export function getMeta(): MetaData | null {
  * 加载单个 Y-slice (XZ 平面)
  */
 export async function loadYSlice(yLayer: number, fishId: number): Promise<Float32Array> {
-    const cacheKey: CacheKey = { z: yLayer, fishId };
+    const cacheKey: CacheKey = { y: yLayer, fishId };
 
     const cached = sliceCache.get(cacheKey);
     if (cached) return cached;

@@ -1,6 +1,8 @@
 /**
  * Node.js 版本的 weights.bin 转换脚本
- * 将 FishWeightPrecomputer 生成的 weights.bin 转换为切片格式
+ * 按 Y (高度) 切片：slice_xz_y{y}_f{fishId}.bin
+ * 同时生成 3D 全量数据：volume_f{fishId}.bin
+ * 
  * 运行: node convert_weights.cjs
  */
 const fs = require('fs');
@@ -10,7 +12,6 @@ const path = require('path');
 const speciesMapping = JSON.parse(
     fs.readFileSync(path.join(__dirname, '..', 'species_mapping.json'), 'utf-8')
 );
-
 console.log(`Loaded ${speciesMapping.length} species from mapping`);
 
 // 读取 weights.bin
@@ -20,7 +21,6 @@ console.log(`Loaded weights.bin: ${buffer.length} bytes`);
 
 // 解析 Header
 let offset = 0;
-
 const magic = buffer.readUInt32LE(offset); offset += 4;
 if (magic !== 0x46495348) {
     throw new Error(`Invalid magic number: 0x${magic.toString(16)}`);
@@ -28,12 +28,12 @@ if (magic !== 0x46495348) {
 
 const version = buffer.readUInt32LE(offset); offset += 4;
 const dimX = buffer.readUInt32LE(offset); offset += 4;
-const dimY = buffer.readUInt32LE(offset); offset += 4;
+const dimY = buffer.readUInt32LE(offset); offset += 4;  // 高度层 (8)
 const dimZ = buffer.readUInt32LE(offset); offset += 4;
 const numSpecies = buffer.readUInt32LE(offset); offset += 4;
 
 console.log(`Version: ${version}`);
-console.log(`Dimensions: ${dimX} x ${dimY} x ${dimZ}`);
+console.log(`Dimensions: X=${dimX}, Y=${dimY} (height), Z=${dimZ}`);
 console.log(`Species count: ${numSpecies}`);
 
 // 读取 Species IDs
@@ -42,12 +42,8 @@ for (let i = 0; i < numSpecies; i++) {
     speciesIds.push(buffer.readUInt32LE(offset));
     offset += 4;
 }
-console.log(`Species IDs (first 5): ${speciesIds.slice(0, 5).join(', ')}...`);
 
-// 数据起始位置
 const dataOffset = offset;
-const totalFloats = dimX * dimY * dimZ * numSpecies;
-console.log(`Data offset: ${dataOffset}, Total floats: ${totalFloats}`);
 
 // 创建输出目录
 const outputDir = path.join(__dirname, 'public', 'data');
@@ -60,40 +56,68 @@ const oldFiles = fs.readdirSync(outputDir).filter(f => f.endsWith('.bin'));
 oldFiles.forEach(f => fs.unlinkSync(path.join(outputDir, f)));
 console.log(`Cleared ${oldFiles.length} old files`);
 
-// 提取切片
 // weights.bin 格式: data[x][y][z][species] (C order)
 // flatIndex = (x * dimY * dimZ + y * dimZ + z) * numSpecies + s
-console.log('\nExtracting slices...');
 
-for (let z = 0; z < dimZ; z++) {
+console.log('\n=== Generating Y-slices (for 2D view) ===');
+// 按 Y 切片：每个切片是 XZ 平面
+for (let y = 0; y < dimY; y++) {
     for (let s = 0; s < numSpecies; s++) {
         const fishId = speciesIds[s];
 
-        // 创建切片数据 (行主序: Y 变化最慢)
-        const sliceData = new Float32Array(dimX * dimY);
+        // 创建 XZ 切片 (dimX * dimZ)
+        const sliceData = new Float32Array(dimX * dimZ);
 
-        for (let y = 0; y < dimY; y++) {
+        for (let z = 0; z < dimZ; z++) {
             for (let x = 0; x < dimX; x++) {
-                // 读取 weights.bin 中的值
                 const flatIndex = (x * dimY * dimZ + y * dimZ + z) * numSpecies + s;
                 const byteOffset = dataOffset + flatIndex * 4;
                 const value = buffer.readFloatLE(byteOffset);
 
-                // 写入切片 (行主序)
-                sliceData[y * dimX + x] = value;
+                // 行主序: z * dimX + x
+                sliceData[z * dimX + x] = value;
             }
         }
 
-        // 保存文件
-        const filename = `slice_xy_z${z}_f${fishId}.bin`;
-        const filepath = path.join(outputDir, filename);
-        fs.writeFileSync(filepath, Buffer.from(sliceData.buffer));
+        const filename = `slice_xz_y${y}_f${fishId}.bin`;
+        fs.writeFileSync(path.join(outputDir, filename), Buffer.from(sliceData.buffer));
     }
-    console.log(`  Z=${z} done (${numSpecies} species)`);
+    console.log(`  Y=${y} done (${numSpecies} species)`);
 }
 
+console.log('\n=== Generating 3D volumes (for 3D view) ===');
+// 为 3D 视图生成完整体数据
+for (let s = 0; s < numSpecies; s++) {
+    const fishId = speciesIds[s];
+
+    // 全量数据: dimX * dimY * dimZ
+    const volumeData = new Float32Array(dimX * dimY * dimZ);
+
+    for (let x = 0; x < dimX; x++) {
+        for (let y = 0; y < dimY; y++) {
+            for (let z = 0; z < dimZ; z++) {
+                const flatIndex = (x * dimY * dimZ + y * dimZ + z) * numSpecies + s;
+                const byteOffset = dataOffset + flatIndex * 4;
+                const value = buffer.readFloatLE(byteOffset);
+
+                // 输出顺序: x * dimY * dimZ + y * dimZ + z
+                const outIndex = x * dimY * dimZ + y * dimZ + z;
+                volumeData[outIndex] = value;
+            }
+        }
+    }
+
+    const filename = `volume_f${fishId}.bin`;
+    fs.writeFileSync(path.join(outputDir, filename), Buffer.from(volumeData.buffer));
+
+    if ((s + 1) % 10 === 0) {
+        console.log(`  ${s + 1}/${numSpecies} species done`);
+    }
+}
+console.log(`  ${numSpecies}/${numSpecies} species done`);
+
 // 生成 meta.json
-const fishList = speciesIds.map((id, idx) => {
+const fishList = speciesIds.map((id) => {
     const mapping = speciesMapping.find(m => m.fishEnvId === id);
     return {
         fishId: id,
@@ -116,12 +140,12 @@ const meta = {
     },
     version: {
         buildTimeISO: new Date().toISOString(),
-        hash: 'weights_bin_converted'
+        hash: 'weights_bin_v2'
     }
 };
 
-const metaPath = path.join(__dirname, 'public', 'meta.json');
-fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-console.log(`\nGenerated meta.json with ${fishList.length} species`);
+fs.writeFileSync(path.join(__dirname, 'public', 'meta.json'), JSON.stringify(meta, null, 2));
 
-console.log(`\nDone! Generated ${dimZ * numSpecies} slice files.`);
+const totalSlices = dimY * numSpecies;
+const totalVolumes = numSpecies;
+console.log(`\nDone! Generated ${totalSlices} Y-slices + ${totalVolumes} volumes.`);

@@ -18,7 +18,7 @@ import './App.css';
 
 const DEFAULT_CONTROL: ControlState = {
   axis: 'XY',
-  zSlice: 0,       // 现在用作 Y 层 (0-7)
+  ySlice: 0,       // Y 层 (0-7)
   selectedFishIds: [],
   colorMode: 'AutoP99',
   vmax: 1,
@@ -56,7 +56,7 @@ function App() {
     }
 
     setLoading(true);
-    loadAndAggregateYSlices(control.zSlice, control.selectedFishIds)
+    loadAndAggregateYSlices(control.ySlice, control.selectedFishIds)
       .then(data => {
         setSliceData(data);
         setStats(computeStats(data));
@@ -66,7 +66,7 @@ function App() {
         console.error('Failed to load Y-slice:', e);
         setLoading(false);
       });
-  }, [meta, control.zSlice, control.selectedFishIds, control.viewMode]);
+  }, [meta, control.ySlice, control.selectedFishIds, control.viewMode]);
 
   // 3D: 加载 Volume
   useEffect(() => {
@@ -151,7 +151,7 @@ function App() {
             vmin={0}
             vmax={effectiveVmax}
             useLog={control.useLog}
-            ySlice={control.zSlice}
+            ySlice={control.ySlice}
             onHover={handleHover}
           />
         ) : (

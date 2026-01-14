@@ -57,7 +57,7 @@ export type SliceAxis = 'XY' | 'XZ' | 'YZ';
 /** 控制面板状态 */
 export interface ControlState {
     axis: SliceAxis;
-    zSlice: number;
+    ySlice: number;
     selectedFishIds: number[];
     colorMode: ColorMode;
     vmax: number;
@@ -76,7 +76,7 @@ export interface SliceStats {
 
 /** 缓存键 */
 export interface CacheKey {
-    z: number;
+    y: number;
     fishId: number;
 }
 
