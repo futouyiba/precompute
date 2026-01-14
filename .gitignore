@@ -118,11 +118,13 @@ ipch/
 # OneNote temporary files
 *.onecache
 
-# Windows image file caches
+# OS & IDE
+.vscode/
+.idea/
+.DS_Store
+*.sw?
 Thumbs.db
 ehthumbs.db
-
-# Folder config file
 Desktop.ini
 
 # Recycle Bin used on file shares
@@ -130,3 +132,34 @@ $RECYCLE.BIN/
 
 # VS Code
 .vscode/
+
+# Python & Jupyter
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Node.js (Targets subdirectories as well)
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs
+
+# Data & Outputs (Precompute Artifacts)
+weights.bin
+*.bin
+*.npy
+pond_debug.txt
+species_mapping.json
+Fishing_*/

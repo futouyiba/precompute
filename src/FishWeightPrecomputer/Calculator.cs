@@ -203,34 +203,93 @@ namespace FishWeightPrecomputer
 
         private double CalculateLayerAffinity(int layerId, double baitDepth, double waterDepth)
         {
-            // Calculate Layer Type (1: Surface, 2: Middle, 3: Bottom)
-            int layerType = 2; // Default Middle
-
-            double surfaceLimit = _affinityConst.WaterTopLayerHeight; // e.g. 1m
-            double bottomLimit = _affinityConst.WaterBottomLayerHeight;
-
-            // Simple Layer Logic:
-            double distToBottom = waterDepth - baitDepth;
-
-            if (baitDepth <= surfaceLimit)
-            {
-                layerType = 1; // Surface
-            }
-            else if (distToBottom <= bottomLimit)
-            {
-                layerType = 3; // Bottom
-            }
-            else
-            {
-                layerType = 2; // Middle
-            }
-
             if (!_layerAffinities.TryGetValue(layerId, out var profile)) return 1.0;
             
-            var item = profile.Items.FirstOrDefault(x => x.LayerType == layerType);
-            if (item != null) return item.Coeff;
+            // 收集所有命中的水层
+            var hitLayers = new HashSet<int>();
+            
+            // 1. 绝对值判断
+            DetermineLayerByAbsolute(baitDepth, waterDepth, hitLayers);
+            
+            // 2. 相对值判断
+            DetermineLayerByRelative(baitDepth, waterDepth, hitLayers);
+            
+            // 3. 从命中的水层中取最大亲和系数
+            double maxCoeff = 0.0;
+            foreach (int layerType in hitLayers)
+            {
+                var item = profile.Items.FirstOrDefault(x => x.LayerType == layerType);
+                if (item != null)
+                {
+                    maxCoeff = Math.Max(maxCoeff, item.Coeff);
+                }
+            }
 
-            return 0.0; 
+            return maxCoeff;
+        }
+
+        /// <summary>
+        /// 通过绝对值判断水层
+        /// </summary>
+        private void DetermineLayerByAbsolute(double baitDepth, double waterDepth, HashSet<int> hitLayers)
+        {
+            double surfaceLimit = _affinityConst.WaterTopLayerHeight;
+            double bottomLimit = _affinityConst.WaterBottomLayerHeight;
+            double distToBottom = waterDepth - baitDepth;
+
+            // 饵的深度 - 表层最小厚度 <= 0 → 表层
+            if (baitDepth <= surfaceLimit)
+            {
+                hitLayers.Add(1); // Surface
+            }
+            // 饵的深度 - 表层最小厚度 > 0
+            else
+            {
+                // 饵距水底距离 - 底层最小厚度 <= 0 → 底层
+                if (distToBottom <= bottomLimit)
+                {
+                    hitLayers.Add(3); // Bottom
+                }
+                // 饵距水底距离 - 底层最小厚度 > 0 → 中层
+                else
+                {
+                    hitLayers.Add(2); // Middle
+                }
+            }
+        }
+
+        /// <summary>
+        /// 通过相对值判断水层
+        /// </summary>
+        private void DetermineLayerByRelative(double baitDepth, double waterDepth, HashSet<int> hitLayers)
+        {
+            if (waterDepth <= 0) return; // 避免除零
+
+            double surfaceRatio = _affinityConst.WaterTopLayerRatio;
+            double bottomRatio = _affinityConst.WaterBottomLayerRatio;
+            double relativeDepth = baitDepth / waterDepth;
+            double distToBottom = waterDepth - baitDepth;
+            double relativeDistToBottom = distToBottom / waterDepth;
+
+            // 饵的相对深度 - 表层深度比例 <= 0 → 表层
+            if (relativeDepth <= surfaceRatio)
+            {
+                hitLayers.Add(1); // Surface
+            }
+            // 饵的相对深度 - 表层深度比例 > 0
+            else
+            {
+                // (饵距水底距离 / 最大深度) - 底层深度比例 <= 0 → 底层
+                if (relativeDistToBottom <= bottomRatio)
+                {
+                    hitLayers.Add(3); // Bottom
+                }
+                // > 0 → 中层
+                else
+                {
+                    hitLayers.Add(2); // Middle
+                }
+            }
         }
 
         private double CalculateWeatherAffinity(int weatherId, double pressureSensitivity)

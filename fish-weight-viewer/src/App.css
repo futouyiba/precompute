@@ -1,0 +1,129 @@
+/* 主应用样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  background: #0d0d1a;
+  color: #eee;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.app.error-screen {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.app.error-screen h1 {
+  color: #ff6b6b;
+}
+
+.app.error-screen code {
+  background: #2a2a4a;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Main View */
+.main-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 13, 26, 0.8);
+  z-index: 100;
+  font-size: 1.2em;
+  color: #00d9ff;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #333;
+  border-top-color: #00d9ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Colorbar */
+.colorbar {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.colorbar-gradient {
+  flex: 1;
+  background: linear-gradient(to top,
+      #440154,
+      #482878,
+      #3e4989,
+      #31688e,
+      #26828e,
+      #1f9e89,
+      #35b779,
+      #6ece58,
+      #b5de2b,
+      #fde725);
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+.colorbar-labels {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column-reverse;
+  height: 100%;
+  position: absolute;
+  right: 28px;
+  font-size: 0.8em;
+  color: #888;
+}
+
+/* Canvas container for potential zoom/pan */
+.main-view canvas {
+  box-shadow: 0 4px 20px rgba(0, 217, 255, 0.1);
+  border-radius: 4px;
+}
