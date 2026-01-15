@@ -107,7 +107,7 @@ namespace FishWeightPrecomputer
         public string Name { get; set; }
 
         [JsonPropertyName("pressureInfluence")]
-        public int PressureInfluence { get; set; } 
+        public int PressureInfluence { get; set; }
 
         [JsonPropertyName("water_temp")]
         public int WaterTemp { get; set; }
@@ -141,7 +141,7 @@ namespace FishWeightPrecomputer
 
         [JsonPropertyName("hypolimnionT")]
         public int HypolimnionT { get; set; }
-        
+
         [JsonPropertyName("mapId")]
         public int MapId { get; set; }
     }
@@ -181,7 +181,7 @@ namespace FishWeightPrecomputer
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
-        
+
         [JsonPropertyName("name")]
         public string Name { get; set; }
     }
@@ -232,7 +232,10 @@ namespace FishWeightPrecomputer
     public class MapSceneInfo
     {
         [JsonPropertyName("id")]
-        public int Id { get; set; } // This is MapID
+        public int Id { get; set; } // This is Scene Entry ID
+
+        [JsonPropertyName("desc")]
+        public int Desc { get; set; } // This is the Game Map ID (matching fish_pond_list)
 
         [JsonPropertyName("assetId")]
         public string AssetId { get; set; } // This is SceneID (string in JSON)

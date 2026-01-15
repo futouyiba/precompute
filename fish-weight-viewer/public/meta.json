@@ -3,7 +3,7 @@
     "x": 134,
     "y": 8,
     "z": 134,
-    "f": 49
+    "f": 35
   },
   "grid": {
     "origin": [
@@ -19,200 +19,144 @@
   },
   "fishList": [
     {
-      "fishId": 1010630,
-      "name": "Fish_Alewife_Apex"
+      "fishId": 1013390,
+      "name": "Fish_American_Shad_Young_sunset"
     },
     {
-      "fishId": 1010063,
-      "name": "Fish_Alewife_Common"
+      "fishId": 1013410,
+      "name": "Fish_Bowfin_Young_sunset"
     },
     {
-      "fishId": 1010082,
-      "name": "Fish_Alewife_Trophy"
+      "fishId": 1010066,
+      "name": "Fish_Brook_Trout_Common"
     },
     {
-      "fishId": 1010520,
-      "name": "Fish_Alewife_Unique"
+      "fishId": 1013050,
+      "name": "Fish_Brook_Trout_Young"
     },
     {
-      "fishId": 1010081,
-      "name": "Fish_Alewife_Young"
+      "fishId": 1010100,
+      "name": "Fish_Brown_Trout_Common"
     },
     {
-      "fishId": 1010097,
-      "name": "Fish_Bigmouth_Buffalo_Common"
+      "fishId": 1013100,
+      "name": "Fish_Brown_Trout_Trophy"
     },
     {
-      "fishId": 1010260,
-      "name": "Fish_Bigmouth_Buffalo_Young"
+      "fishId": 1013090,
+      "name": "Fish_Brown_Trout_Young"
     },
     {
-      "fishId": 1010460,
-      "name": "Fish_Bluegill_Sunfish_Apex"
+      "fishId": 1013460,
+      "name": "Fish_Golden_Trout_Apex_sunset"
     },
     {
-      "fishId": 1010061,
-      "name": "Fish_Bluegill_Sunfish_Common"
+      "fishId": 1013430,
+      "name": "Fish_Golden_Trout_Common_sunset"
     },
     {
-      "fishId": 1010062,
-      "name": "Fish_Bluegill_Sunfish_Trophy"
+      "fishId": 1013440,
+      "name": "Fish_Golden_Trout_Trophy_sunset"
     },
     {
-      "fishId": 1010079,
-      "name": "Fish_Bluegill_Sunfish_Unique"
+      "fishId": 1013450,
+      "name": "Fish_Golden_Trout_Unique_sunset"
     },
     {
-      "fishId": 1010078,
-      "name": "Fish_Bluegill_Sunfish_Young"
+      "fishId": 1013420,
+      "name": "Fish_Golden_Trout_Young_sunset"
     },
     {
-      "fishId": 1010036,
-      "name": "Fish_Buffalo_Common"
+      "fishId": 1013510,
+      "name": "Fish_Hardhead_Apex_sunset"
     },
     {
-      "fishId": 1010072,
-      "name": "Fish_Buffalo_Young"
+      "fishId": 1013480,
+      "name": "Fish_Hardhead_Common_sunset"
     },
     {
-      "fishId": 1010042,
-      "name": "Fish_Channel_Catfish_Common"
+      "fishId": 1013490,
+      "name": "Fish_Hardhead_Trophy_sunset"
     },
     {
-      "fishId": 1010041,
-      "name": "Fish_Channel_Catfish_Young"
+      "fishId": 1013500,
+      "name": "Fish_Hardhead_Unique_sunset"
     },
     {
-      "fishId": 1010420,
-      "name": "Fish_Common_Shiner_Apex"
+      "fishId": 1013470,
+      "name": "Fish_Hardhead_Young_sunset"
     },
     {
-      "fishId": 1010120,
-      "name": "Fish_Common_Shiner_Common"
+      "fishId": 1013250,
+      "name": "Fish_Rainbow_Trout_Apex"
     },
     {
-      "fishId": 1010400,
-      "name": "Fish_Common_Shiner_Trophy"
+      "fishId": 1013220,
+      "name": "Fish_Rainbow_Trout_Common"
     },
     {
-      "fishId": 1010410,
-      "name": "Fish_Common_Shiner_Unique"
+      "fishId": 1013230,
+      "name": "Fish_Rainbow_Trout_Trophy"
     },
     {
-      "fishId": 1010210,
-      "name": "Fish_Common_Shiner_Young"
+      "fishId": 1013240,
+      "name": "Fish_Rainbow_Trout_Unique"
     },
     {
-      "fishId": 1010430,
-      "name": "Fish_Green_Sunfish_Apex"
+      "fishId": 1013210,
+      "name": "Fish_Rainbow_Trout_Young"
     },
     {
-      "fishId": 1010071,
-      "name": "Fish_Green_Sunfish_Common"
+      "fishId": 1013170,
+      "name": "Fish_River_Chub_Apex"
     },
     {
-      "fishId": 1010049,
-      "name": "Fish_Green_Sunfish_Trophy"
+      "fishId": 1010118,
+      "name": "Fish_River_Chub_Common"
     },
     {
-      "fishId": 1010050,
-      "name": "Fish_Green_Sunfish_Unique"
+      "fishId": 1013150,
+      "name": "Fish_River_Chub_Trophy"
     },
     {
-      "fishId": 1010075,
-      "name": "Fish_Green_Sunfish_Young"
+      "fishId": 1013160,
+      "name": "Fish_River_Chub_Unique"
     },
     {
-      "fishId": 1013020,
-      "name": "Fish_Hardhead_Apex"
+      "fishId": 1013140,
+      "name": "Fish_River_Chub_Young"
     },
     {
-      "fishId": 1010109,
-      "name": "Fish_Hardhead_Common"
+      "fishId": 1010560,
+      "name": "Fish_Rock_Bass_Apex"
     },
     {
-      "fishId": 1013000,
-      "name": "Fish_Hardhead_Trophy"
+      "fishId": 1010014,
+      "name": "Fish_Rock_Bass_Common"
     },
     {
-      "fishId": 1013010,
-      "name": "Fish_Hardhead_Unique"
+      "fishId": 1010015,
+      "name": "Fish_Rock_Bass_Trophy"
     },
     {
-      "fishId": 1012990,
-      "name": "Fish_Hardhead_Young"
+      "fishId": 1010016,
+      "name": "Fish_Rock_Bass_Unique"
     },
     {
-      "fishId": 1010450,
-      "name": "Fish_Pumpkinseed_Sunfish_Apex"
+      "fishId": 1010013,
+      "name": "Fish_Rock_Bass_Young"
     },
     {
-      "fishId": 1010048,
-      "name": "Fish_Pumpkinseed_Sunfish_Common"
+      "fishId": 1013370,
+      "name": "Fish_Steelhead_Trout_Common"
     },
     {
-      "fishId": 1010070,
-      "name": "Fish_Pumpkinseed_Sunfish_Trophy"
+      "fishId": 1013380,
+      "name": "Fish_Steelhead_Trout_Trophy"
     },
     {
-      "fishId": 1010440,
-      "name": "Fish_Pumpkinseed_Sunfish_Unique"
-    },
-    {
-      "fishId": 1010047,
-      "name": "Fish_Pumpkinseed_Sunfish_Young"
-    },
-    {
-      "fishId": 1010480,
-      "name": "Fish_Redear_Sunfish_Apex"
-    },
-    {
-      "fishId": 1010034,
-      "name": "Fish_Redear_Sunfish_Common"
-    },
-    {
-      "fishId": 1010035,
-      "name": "Fish_Redear_Sunfish_Trophy"
-    },
-    {
-      "fishId": 1010470,
-      "name": "Fish_Redear_Sunfish_Unique"
-    },
-    {
-      "fishId": 1010033,
-      "name": "Fish_Redear_Sunfish_Young"
-    },
-    {
-      "fishId": 1010053,
-      "name": "Fish_Tench_Common"
-    },
-    {
-      "fishId": 1010054,
-      "name": "Fish_Tench_Trophy"
-    },
-    {
-      "fishId": 1010086,
-      "name": "Fish_Tench_Young"
-    },
-    {
-      "fishId": 1010490,
-      "name": "Fish_Yaqui_Sucker_Apex"
-    },
-    {
-      "fishId": 1010121,
-      "name": "Fish_Yaqui_Sucker_Common"
-    },
-    {
-      "fishId": 1010230,
-      "name": "Fish_Yaqui_Sucker_Trophy"
-    },
-    {
-      "fishId": 1010240,
-      "name": "Fish_Yaqui_Sucker_Unique"
-    },
-    {
-      "fishId": 1010220,
-      "name": "Fish_Yaqui_Sucker_Young"
+      "fishId": 1013360,
+      "name": "Fish_Steelhead_Trout_Young"
     }
   ],
   "encoding": {
@@ -222,7 +166,7 @@
     "rowMajor": true
   },
   "version": {
-    "buildTimeISO": "2026-01-14T11:58:47.060Z",
+    "buildTimeISO": "2026-01-14T15:44:03.624Z",
     "hash": "weights_bin_v2"
   }
 }

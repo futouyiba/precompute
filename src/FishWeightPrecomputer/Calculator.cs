@@ -13,7 +13,7 @@ namespace FishWeightPrecomputer
         private Dictionary<int, WeatherFactor> _weatherFactors;
         private Dictionary<int, PeriodAffinity> _periodAffinities;
         private Dictionary<int, FishEnvAffinity> _fishEnvAffinities;
-        
+
         private Dictionary<int, List<PeriodAffinity>> _periodGroups;
 
         public Calculator(
@@ -31,7 +31,7 @@ namespace FishWeightPrecomputer
             _tempAffinities = tempAffinities.ToDictionary(x => x.Id);
             _layerAffinities = layerAffinities.ToDictionary(x => x.Id);
             _weatherFactors = weatherFactors.ToDictionary(x => x.Id);
-            
+
             _periodAffinities = periodAffinities.ToDictionary(x => x.Id);
             _fishEnvAffinities = fishEnvAffinities.ToDictionary(x => x.Id);
 
@@ -40,11 +40,11 @@ namespace FishWeightPrecomputer
 
         public double CalculateWeight(
             int fishEnvId,
-            int voxelX, int voxelY, int voxelZ, 
+            int voxelX, int voxelY, int voxelZ,
             double baitDepth, double waterDepth, int voxelBitmask,
             int weatherId, string periodKey,
             double baseWeight, double minEnvCoeff,
-            double weatherWaterTemp, 
+            double weatherWaterTemp,
             double bottomTemp,
             double waterMinZ,
             double waterMaxZ
@@ -54,7 +54,7 @@ namespace FishWeightPrecomputer
                 return 0;
 
             // 1. Temp Affinity
-            double tempAffinity = CalculateTempAffinity(fishAffinity.TempId, baitDepth, waterDepth, 
+            double tempAffinity = CalculateTempAffinity(fishAffinity.TempId, baitDepth, waterDepth,
                 weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ);
 
             // 2. Struct Affinity
@@ -70,7 +70,7 @@ namespace FishWeightPrecomputer
             double periodActivity = CalculatePeriodActivity(fishAffinity.PeriodCoeffGroup, periodKey);
 
             double envCoeff = tempAffinity * structAffinity * layerAffinity * weatherAffinity * periodActivity;
-            
+
             envCoeff = Math.Max(envCoeff, minEnvCoeff);
 
             return baseWeight * envCoeff;
@@ -99,12 +99,12 @@ namespace FishWeightPrecomputer
             }
 
             // 1. Temp Affinity
-            double tempAffinity = CalculateTempAffinity(fishAffinity.TempId, baitDepth, waterDepth, 
+            double tempAffinity = CalculateTempAffinity(fishAffinity.TempId, baitDepth, waterDepth,
                 weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ);
             Console.WriteLine($"1. TempAffinity (Id {fishAffinity.TempId}): {tempAffinity:F4}");
             if (_tempAffinities.TryGetValue(fishAffinity.TempId, out var ta))
             {
-                 Console.WriteLine($"   - Profile: Fav={ta.TemperatureFav/10f}, Threshold={ta.TempThreshold}");
+                Console.WriteLine($"   - Profile: Fav={ta.TemperatureFav / 10f}, Threshold={ta.TempThreshold}");
             }
 
             // 2. Struct Affinity
@@ -125,27 +125,27 @@ namespace FishWeightPrecomputer
 
             double envCoeff = tempAffinity * structAffinity * layerAffinity * weatherAffinity * periodActivity;
             Console.WriteLine($"Raw EnvCoeff: {envCoeff:F6}");
-            
+
             envCoeff = Math.Max(envCoeff, minEnvCoeff);
             Console.WriteLine($"Final EnvCoeff (Min {minEnvCoeff}): {envCoeff:F6}");
 
             return baseWeight * envCoeff;
         }
 
-        private double CalculateTempAffinity(int tempId, double baitDepth, double waterDepth, 
+        private double CalculateTempAffinity(int tempId, double baitDepth, double waterDepth,
             double weatherWaterTemp, double bottomTemp, double waterMinZ, double waterMaxZ)
         {
-            if (!_tempAffinities.TryGetValue(tempId, out var affinity)) return 1.0; 
+            if (!_tempAffinities.TryGetValue(tempId, out var affinity)) return 1.0;
 
             // WeatherWaterTemp is Surface Temp.
             double tempGradient = 0;
             // Use WaterMaxZ (Pool Depth) for gradient calculation as per docs
             if (Math.Abs(waterMaxZ - waterMinZ) > 0.0001)
                 tempGradient = (weatherWaterTemp - bottomTemp) / (waterMaxZ - waterMinZ);
-            
+
             double baitTemp = weatherWaterTemp - tempGradient * baitDepth;
 
-            double favTemp = affinity.TemperatureFav / 10.0; 
+            double favTemp = affinity.TemperatureFav / 10.0;
             double fishTolerance = affinity.TempAffectedRatio;
             double globalTolerance = _affinityConst.TempToleranceWidth;
 
@@ -163,7 +163,7 @@ namespace FishWeightPrecomputer
         private double CalculateStructAffinity(int structId, int voxelBitmask)
         {
             if (!_structAffinities.TryGetValue(structId, out var profile)) return 1.0;
-            
+
             double maxCoeff = 0;
             bool foundAnyStruct = false;
 
@@ -191,7 +191,7 @@ namespace FishWeightPrecomputer
                     maxCoeff = Math.Max(maxCoeff, item.Coeff);
                 }
             }
-            
+
             // If no match found or coeff is 0? 
             // If struct exists but has 0 coeff in profile, maxCoeff remains 0 (if init 0).
             // But if NO structs found at all (e.g. land, bitmask 0), weight should be 0?
@@ -204,16 +204,16 @@ namespace FishWeightPrecomputer
         private double CalculateLayerAffinity(int layerId, double baitDepth, double waterDepth)
         {
             if (!_layerAffinities.TryGetValue(layerId, out var profile)) return 1.0;
-            
+
             // 收集所有命中的水层
             var hitLayers = new HashSet<int>();
-            
+
             // 1. 绝对值判断
             DetermineLayerByAbsolute(baitDepth, waterDepth, hitLayers);
-            
+
             // 2. 相对值判断
             DetermineLayerByRelative(baitDepth, waterDepth, hitLayers);
-            
+
             // 3. 从命中的水层中取最大亲和系数
             double maxCoeff = 0.0;
             foreach (int layerType in hitLayers)
@@ -295,7 +295,7 @@ namespace FishWeightPrecomputer
         private double CalculateWeatherAffinity(int weatherId, double pressureSensitivity)
         {
             if (!_weatherFactors.TryGetValue(weatherId, out var weather)) return 1.0;
-            
+
             // Weather PressureInfluence is int, e.g. 10000. 
             double influence = weather.PressureInfluence / 10000.0;
             // Pressure Activity = Influence ^ Sensitivity
@@ -313,10 +313,18 @@ namespace FishWeightPrecomputer
             }
             return 1.0;
         }
-        
+
+        public HashSet<int> GetLayerTypes(double baitDepth, double waterDepth)
+        {
+            var hitLayers = new HashSet<int>();
+            DetermineLayerByAbsolute(baitDepth, waterDepth, hitLayers);
+            DetermineLayerByRelative(baitDepth, waterDepth, hitLayers);
+            return hitLayers;
+        }
+
         private int GetPeriodId(string key)
         {
-            switch(key)
+            switch (key)
             {
                 case "period6_9": return 101060001;
                 case "period9_12": return 101060002;
