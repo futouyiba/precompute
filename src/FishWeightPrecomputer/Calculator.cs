@@ -331,7 +331,7 @@ namespace FishWeightPrecomputer
                 case "period12_15": return 101060003;
                 case "period15_18": return 101060004;
                 case "period18_21": return 101060005;
-                case "period21_24": return 101060006;
+                case "period21_0": return 101060006;
                 case "period0_3": return 101060007;
                 case "period3_6": return 101060008;
                 default: return 0;

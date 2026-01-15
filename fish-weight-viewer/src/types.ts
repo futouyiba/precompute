@@ -41,6 +41,7 @@ export interface MetaData {
     dims: Dims;
     grid: Grid;
     fishList: FishInfo[];
+    scenarios?: string[]; // 支持多天气场景
     encoding: Encoding;
     version: VersionInfo;
 }
@@ -59,6 +60,7 @@ export interface ControlState {
     axis: SliceAxis;
     ySlice: number;
     selectedFishIds: number[];
+    selectedScenarioIndex: number; // 当前选中的天气场景
     colorMode: ColorMode;
     vmax: number;
     useLog: boolean;

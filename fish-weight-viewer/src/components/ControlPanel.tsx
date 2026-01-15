@@ -135,6 +135,24 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
             </section>
 
+            {/* Weather Scenario Selection (New) */}
+            {meta?.scenarios && meta.scenarios.length > 0 && (
+                <section>
+                    <h3>Weather Scenario</h3>
+                    <select
+                        value={control.selectedScenarioIndex}
+                        onChange={e => onChange({ selectedScenarioIndex: parseInt(e.target.value) })}
+                        style={{ width: '100%', padding: '5px' }}
+                    >
+                        {meta.scenarios.map((scen, idx) => (
+                            <option key={idx} value={idx}>
+                                {idx}: {scen}
+                            </option>
+                        ))}
+                    </select>
+                </section>
+            )}
+
             {/* 颜色映射控制 */}
             <section>
                 <h3>Color Mapping</h3>

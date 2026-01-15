@@ -8,16 +8,16 @@ import { LRUCache } from './LRUCache';
 const SLICE_CACHE_SIZE = 64;
 const VOLUME_CACHE_SIZE = 8;
 
-// Y-slice 缓存
-const sliceCache = new LRUCache<CacheKey, Float32Array>(
+// Y-slice 缓存 Key: y_f{fid}_s{scen}
+const sliceCache = new LRUCache<string, Float32Array>(
     SLICE_CACHE_SIZE,
-    (k) => `y${k.y}_f${k.fishId}`  // y 参数表示 Y 层
+    (k) => k
 );
 
-// Volume 缓存
-const volumeCache = new LRUCache<number, Float32Array>(
+// Volume 缓存 Key: f{fid}_s{scen}
+const volumeCache = new LRUCache<string, Float32Array>(
     VOLUME_CACHE_SIZE,
-    (fishId) => `vol_${fishId}`
+    (k) => k
 );
 
 let metaData: MetaData | null = null;
@@ -43,8 +43,8 @@ export function getMeta(): MetaData | null {
 /**
  * 加载单个 Y-slice (XZ 平面)
  */
-export async function loadYSlice(yLayer: number, fishId: number): Promise<Float32Array> {
-    const cacheKey: CacheKey = { y: yLayer, fishId };
+export async function loadYSlice(yLayer: number, fishId: number, scenarioIndex: number = 0): Promise<Float32Array> {
+    const cacheKey = `y${yLayer}_f${fishId}_s${scenarioIndex}`;
 
     const cached = sliceCache.get(cacheKey);
     if (cached) return cached;
@@ -52,8 +52,8 @@ export async function loadYSlice(yLayer: number, fishId: number): Promise<Float3
     const meta = await loadMeta();
     const { dims } = meta;
 
-    // 新格式: slice_xz_y{y}_f{fishId}.bin
-    const url = `/data/slice_xz_y${yLayer}_f${fishId}.bin`;
+    // 新格式: s{scen}_slice_xz_y{y}_f{fishId}.bin
+    const url = `/data/s${scenarioIndex}_slice_xz_y${yLayer}_f${fishId}.bin`;
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -73,27 +73,28 @@ export async function loadYSlice(yLayer: number, fishId: number): Promise<Float3
 /**
  * 加载 3D Volume (单个鱼种的完整数据)
  */
-export async function loadVolume(fishId: number): Promise<Float32Array> {
-    const cached = volumeCache.get(fishId);
+export async function loadVolume(fishId: number, scenarioIndex: number = 0): Promise<Float32Array> {
+    const cacheKey = `vol_f${fishId}_s${scenarioIndex}`;
+    const cached = volumeCache.get(cacheKey);
     if (cached) return cached;
 
     const meta = await loadMeta();
     const { dims } = meta;
 
-    const url = `/data/volume_f${fishId}.bin`;
+    const url = `/data/s${scenarioIndex}_volume_f${fishId}.bin`;
     const response = await fetch(url);
 
     if (!response.ok) {
         console.warn(`Volume not found: ${url}`);
         const zeros = new Float32Array(dims.x * dims.y * dims.z);
-        volumeCache.set(fishId, zeros);
+        volumeCache.set(cacheKey, zeros);
         return zeros;
     }
 
     const buffer = await response.arrayBuffer();
     const result = new Float32Array(buffer);
 
-    volumeCache.set(fishId, result);
+    volumeCache.set(cacheKey, result);
     return result;
 }
 
@@ -102,7 +103,8 @@ export async function loadVolume(fishId: number): Promise<Float32Array> {
  */
 export async function loadAndAggregateYSlices(
     yLayer: number,
-    fishIds: number[]
+    fishIds: number[],
+    scenarioIndex: number = 0
 ): Promise<Float32Array> {
     const meta = await loadMeta();
     const size = meta.dims.x * meta.dims.z;
@@ -112,7 +114,7 @@ export async function loadAndAggregateYSlices(
     }
 
     const slices = await Promise.all(
-        fishIds.map(fishId => loadYSlice(yLayer, fishId))
+        fishIds.map(fishId => loadYSlice(yLayer, fishId, scenarioIndex))
     );
 
     const result = new Float32Array(size);
@@ -129,7 +131,8 @@ export async function loadAndAggregateYSlices(
  * 并行加载多个 Volume 并聚合 (用于 3D 视图)
  */
 export async function loadAndAggregateVolumes(
-    fishIds: number[]
+    fishIds: number[],
+    scenarioIndex: number = 0
 ): Promise<Float32Array> {
     const meta = await loadMeta();
     const size = meta.dims.x * meta.dims.y * meta.dims.z;
@@ -139,7 +142,7 @@ export async function loadAndAggregateVolumes(
     }
 
     const volumes = await Promise.all(
-        fishIds.map(fishId => loadVolume(fishId))
+        fishIds.map(fishId => loadVolume(fishId, scenarioIndex))
     );
 
     const result = new Float32Array(size);

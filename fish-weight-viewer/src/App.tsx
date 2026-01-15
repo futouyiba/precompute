@@ -20,6 +20,7 @@ const DEFAULT_CONTROL: ControlState = {
   axis: 'XY',
   ySlice: 0,       // Y 层 (0-7)
   selectedFishIds: [],
+  selectedScenarioIndex: 0, // NEW
   colorMode: 'AutoP99',
   vmax: 1,
   useLog: false,
@@ -56,7 +57,7 @@ function App() {
     }
 
     setLoading(true);
-    loadAndAggregateYSlices(control.ySlice, control.selectedFishIds)
+    loadAndAggregateYSlices(control.ySlice, control.selectedFishIds, control.selectedScenarioIndex)
       .then(data => {
         setSliceData(data);
         setStats(computeStats(data));
@@ -66,7 +67,7 @@ function App() {
         console.error('Failed to load Y-slice:', e);
         setLoading(false);
       });
-  }, [meta, control.ySlice, control.selectedFishIds, control.viewMode]);
+  }, [meta, control.ySlice, control.selectedFishIds, control.viewMode, control.selectedScenarioIndex]);
 
   // 3D: 加载 Volume
   useEffect(() => {
@@ -75,7 +76,7 @@ function App() {
     }
 
     setLoading(true);
-    loadAndAggregateVolumes(control.selectedFishIds)
+    loadAndAggregateVolumes(control.selectedFishIds, control.selectedScenarioIndex)
       .then(data => {
         setVolumeData(data);
         setStats(computeStats(data));
@@ -85,7 +86,7 @@ function App() {
         console.error('Failed to load Volume:', e);
         setLoading(false);
       });
-  }, [meta, control.selectedFishIds, control.viewMode]);
+  }, [meta, control.selectedFishIds, control.viewMode, control.selectedScenarioIndex]);
 
   // 计算有效 vmax
   const effectiveVmax = useMemo(() => {

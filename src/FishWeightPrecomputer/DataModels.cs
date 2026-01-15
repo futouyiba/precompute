@@ -109,8 +109,8 @@ namespace FishWeightPrecomputer
         [JsonPropertyName("pressureInfluence")]
         public int PressureInfluence { get; set; }
 
-        [JsonPropertyName("water_temp")]
-        public int WaterTemp { get; set; }
+        [JsonPropertyName("WaterTemp")]
+        public int[] WaterTemp { get; set; }
     }
 
     public class PeriodAffinity
@@ -197,6 +197,9 @@ namespace FishWeightPrecomputer
 
         [JsonPropertyName("waterMinZ")]
         public double WaterMinZ { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
     }
 
     public class MapDataConfig

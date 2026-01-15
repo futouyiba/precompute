@@ -1,3 +1,17 @@
 {
-    "DebugLimit": 2
+    "DebugLimit": 2,
+    "WeatherSequence": [
+        "SS_weather_sunny6_9",
+        "SS_weather_sunny9_12",
+        "SS_weather_sunny12_15",
+        "SS_weather_sunny15_18",
+        "SS_weather_cloudy6_9",
+        "SS_weather_fine_rain9_12",
+        "SS_weather_fine_rain12_15",
+        "SS_weather_fine_rain15_18",
+        "SS_weather_fine_rain6_9",
+        "SS_weather_cloudy9_12",
+        "SS_weather_sunny12_15",
+        "SS_weather_sunny15_18"
+    ]
 }
