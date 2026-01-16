@@ -17,12 +17,17 @@ interface PointCloud3DProps {
     threshold: number;
     width: number;
     height: number;
+    onPointClick?: (x: number, y: number, z: number) => void;
 }
 
 interface PointData {
     position: [number, number, number];
     color: [number, number, number, number];
     value: number;
+    // 原始坐标，方便反查
+    gridX: number;
+    gridY: number; // Height
+    gridZ: number; // Forward
 }
 
 const INITIAL_VIEW_STATE: {
@@ -49,7 +54,8 @@ const PointCloud3D = ({
     useLog,
     threshold,
     width,
-    height
+    height,
+    onPointClick
 }: PointCloud3DProps) => {
     // 构建 3D 点云数据
     const points = useMemo<PointData[]>(() => {
@@ -82,7 +88,10 @@ const PointCloud3D = ({
                     result.push({
                         position: [unityX, unityZ, unityY],
                         color,
-                        value
+                        value,
+                        gridX: x,
+                        gridY: y,
+                        gridZ: z
                     });
                 }
             }
@@ -114,6 +123,12 @@ const PointCloud3D = ({
             getColor: (d: PointData) => d.color,
             pointSize: 3,
             pickable: true,
+            onClick: (info) => {
+                if (onPointClick && info.object) {
+                    const p = info.object as PointData;
+                    onPointClick(p.gridX, p.gridY, p.gridZ);
+                }
+            }
         })
     ];
 

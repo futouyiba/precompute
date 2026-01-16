@@ -15,6 +15,7 @@ interface Heatmap2DProps {
     useLog: boolean;
     ySlice: number;  // Y 层 (高度)
     onHover: (info: PixelInfo | null) => void;
+    onPointClick?: (x: number, y: number, z: number) => void;
 }
 
 const Heatmap2D: React.FC<Heatmap2DProps> = ({
@@ -26,7 +27,8 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
     vmax,
     useLog,
     ySlice,
-    onHover
+    onHover,
+    onPointClick
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animFrameRef = useRef<number>(0);
@@ -125,6 +127,29 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
         onHover(null);
     }, [onHover]);
 
+    const handleMouseClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!meta || !onPointClick) return;
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const { dims } = meta;
+
+        // 转换到数据坐标
+        const x = Math.floor(mouseX / width * dims.x);
+        const z = dims.z - 1 - Math.floor(mouseY / height * dims.z); // 翻转 Z
+
+        if (x < 0 || x >= dims.x || z < 0 || z >= dims.z) {
+            return;
+        }
+
+        onPointClick(x, ySlice, z);
+    }, [meta, width, height, ySlice, onPointClick]);
+
     return (
         <canvas
             ref={canvasRef}
@@ -137,6 +162,7 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
             }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
+            onClick={handleMouseClick}
         />
     );
 };
