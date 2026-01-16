@@ -37,4 +37,4 @@ echo ==========================================
 echo Step 3: Starting Web Server...
 echo ==========================================
 echo Starting Vite server. Press Ctrl+C to stop.
-call npm run dev
+call npm run dev -- --host

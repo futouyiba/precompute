@@ -117,9 +117,12 @@ body,
   flex-direction: column-reverse;
   height: 100%;
   position: absolute;
-  right: 28px;
+  right: 100%;
+  margin-right: 10px;
   font-size: 0.8em;
-  color: #888;
+  color: #eee;
+  white-space: nowrap;
+  text-align: right;
 }
 
 /* Canvas container for potential zoom/pan */

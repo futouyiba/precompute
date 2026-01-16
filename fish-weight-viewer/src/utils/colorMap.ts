@@ -3,16 +3,33 @@
  */
 
 /** Viridis 色带 (简化版 256 级) */
+const VIRIDIS_STOPS_HEX = [
+    "#440154", "#482878", "#3e4989", "#31688e", "#26828e",
+    "#1f9e89", "#35b779", "#6ece58", "#b5de2b", "#fde725"
+];
+
+function hexToRgb(hex: string): [number, number, number] {
+    const bigint = parseInt(hex.slice(1), 16);
+    return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
+const VIRIDIS_STOPS = VIRIDIS_STOPS_HEX.map(hexToRgb);
+
 const VIRIDIS: [number, number, number][] = [];
 for (let i = 0; i < 256; i++) {
     const t = i / 255;
-    // 简化的 Viridis 近似
-    const r = Math.round(255 * Math.max(0, Math.min(1,
-        0.267004 + t * (0.329415 + t * (0.417438 + t * (-0.753844 + t * 0.739623))))));
-    const g = Math.round(255 * Math.max(0, Math.min(1,
-        0.004874 + t * (0.873449 + t * (-0.534556 + t * 0.656525)))));
-    const b = Math.round(255 * Math.max(0, Math.min(1,
-        0.329415 + t * (1.421524 + t * (-2.287093 + t * 1.536874)))));
+    // Find segment
+    const segmentCount = VIRIDIS_STOPS.length - 1;
+    const segmentIndex = Math.min(Math.floor(t * segmentCount), segmentCount - 1);
+    const segmentT = (t * segmentCount) - segmentIndex;
+
+    const start = VIRIDIS_STOPS[segmentIndex];
+    const end = VIRIDIS_STOPS[segmentIndex + 1];
+
+    const r = Math.round(start[0] + (end[0] - start[0]) * segmentT);
+    const g = Math.round(start[1] + (end[1] - start[1]) * segmentT);
+    const b = Math.round(start[2] + (end[2] - start[2]) * segmentT);
+
     VIRIDIS.push([r, g, b]);
 }
 

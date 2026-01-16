@@ -69,13 +69,15 @@ const PointCloud3D = ({
 
                     // 世界坐标 (Unity 坐标系: Y=UP, Z=FORWARD)
                     const unityX = grid.origin[0] + x * grid.step[0];
-                    const unityY = grid.origin[1] + y * grid.step[1];  // 高度 (UP)
+                    // 用户要求: Y=0 最浅, Y 越大越深 -> 视觉上 Y 越大越往下 -> 取反
+                    const depthMeters = grid.origin[1] + y * grid.step[1];
+                    const unityY = -depthMeters; // Depth as negative height
                     const unityZ = grid.origin[2] + z * grid.step[2];  // 前后 (FORWARD)
 
                     // 映射到 deck.gl (Z-UP 系统)
                     // deck.X = Unity.X
                     // deck.Y = Unity.Z (Forward)
-                    // deck.Z = Unity.Y (Up)
+                    // deck.Z = Unity.Y (Up/Height)
 
                     const color = valueToColor(value, vmin, vmax, useLog);
 
@@ -96,13 +98,21 @@ const PointCloud3D = ({
 
         const { dims, grid } = meta;
         const centerX = grid.origin[0] + (dims.x * grid.step[0]) / 2;
-        const centerY_Height = grid.origin[1] + (dims.y * grid.step[1]) / 2;
+        // Center Height needs to account for negative mapping
+        // Min Height (Surface) = -0 (approx)
+        // Max Height (Bottom) = -(origin[1] + dimmed_Y)
+        // Center = -(Max / 2)
+        const maxDepth = grid.origin[1] + (dims.y * grid.step[1]);
+        const centerY_Height = -maxDepth / 2;
         const centerZ_Forward = grid.origin[2] + (dims.z * grid.step[2]) / 2;
 
         return {
             ...INITIAL_VIEW_STATE,
             // Taget: [X, Y=Forward, Z=Up]
-            target: [centerX, centerZ_Forward, centerY_Height] as [number, number, number]
+            target: [centerX, centerZ_Forward, centerY_Height] as [number, number, number],
+            zoom: 1.5, // Increase zoom to fill screen better
+            minZoom: -2,
+            maxZoom: 20,
         };
     }, [meta]);
 

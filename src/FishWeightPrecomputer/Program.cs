@@ -168,7 +168,7 @@ namespace FishWeightPrecomputer
 
                 Console.WriteLine($"Loading NPY Data: {npyPath}");
                 int[] dimensions;
-                int[] voxelData = NpyReader.ReadInt32(npyPath, out dimensions);
+                long[] voxelData = NpyReader.ReadInt64(npyPath, out dimensions);
 
                 int dimX = dimensions[0];
                 int dimY = dimensions[1];
@@ -301,20 +301,23 @@ namespace FishWeightPrecomputer
 
                         for (int i = 0; i < voxelData.Length; i++)
                         {
-                            int bitmask = voxelData[i];
+                            long rawValue = voxelData[i];
+                            int bitmask = (int)(rawValue & 0xFFFFFFFF); // Low 32 bits: flags
+                            int depthCm = (int)(rawValue >> 32);        // High 32 bits: max depth at this column (cm)
 
                             if ((bitmask & 1) == 0) continue; // 0 weight for non-water
 
-                            // Coordinates logic
+                            // New index order: [x, depthIndex, z]
                             int temp = i;
                             int z = temp % dimZ;
                             temp /= dimZ;
-                            int y = temp % dimY;
+                            int depthIndex = temp % dimY;
                             int x = temp / dimY;
 
-                            double voxelWorldY = origin[1] + y * step[1];
-                            double baitDepth = waterMaxZ - voxelWorldY;
-                            double waterDepth = waterMaxZ - waterMinZ;
+                            // Depth calculation: depthIndex represents how deep from surface
+                            // baitDepth = depthIndex * step[1]
+                            double baitDepth = depthIndex * step[1];
+                            double waterDepth = depthCm / 100.0; // Convert cm to meters
 
                             for (int s = 0; s < numSpecies; s++)
                             {
@@ -328,7 +331,7 @@ namespace FishWeightPrecomputer
                                 if (doDebug)
                                 {
                                     weight = calculator.CalculateWeightDebug(
-                                        fishEnvId, x, y, z,
+                                        fishEnvId, x, depthIndex, z,
                                         baitDepth, waterDepth, bitmask,
                                         weatherId, periodKey,
                                         fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
@@ -338,7 +341,7 @@ namespace FishWeightPrecomputer
                                 else
                                 {
                                     weight = calculator.CalculateWeight(
-                                        fishEnvId, x, y, z,
+                                        fishEnvId, x, depthIndex, z,
                                         baitDepth, waterDepth, bitmask,
                                         weatherId, periodKey,
                                         fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
@@ -346,7 +349,7 @@ namespace FishWeightPrecomputer
                                     );
                                 }
 
-                                long flatIndex = ((long)x * dimY * dimZ + y * dimZ + z) * numSpecies + s;
+                                long flatIndex = ((long)x * dimY * dimZ + depthIndex * dimZ + z) * numSpecies + s;
                                 resultData[flatIndex] = (float)weight;
                             }
 

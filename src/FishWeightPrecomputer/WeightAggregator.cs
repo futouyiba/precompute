@@ -62,7 +62,7 @@ namespace FishWeightPrecomputer
         }
 
         public void RunAggregation(
-            int[] voxelData,
+            long[] voxelData,
             int dimX, int dimY, int dimZ,
             float[] origin, float[] step,
             double waterMinZ, double waterMaxZ,
@@ -77,23 +77,29 @@ namespace FishWeightPrecomputer
             int processedCount = 0;
             int inconsistencyCount = 0;
 
-            // Cache water depth
-            double totalWaterDepth = waterMaxZ - waterMinZ;
+            // Note: New format uses high 32 bits for depth (cm), low 32 bits for flags
+            // Array order is [x, depthIndex, z], where depthIndex represents depth from surface
 
             for (int i = 0; i < voxelData.Length; i++)
             {
-                int bitmask = voxelData[i];
+                long rawValue = voxelData[i];
+                int bitmask = (int)(rawValue & 0xFFFFFFFF); // Low 32 bits: flags
+                int depthCm = (int)(rawValue >> 32);        // High 32 bits: max depth at this column (cm)
+
                 if ((bitmask & 1) == 0) continue; // Skip non-water
 
-                // Coordinates
+                // New index order: [x, depthIndex, z]
                 int temp = i;
                 int z = temp % dimZ;
                 temp /= dimZ;
-                int y = temp % dimY;
+                int depthIndex = temp % dimY;
                 int x = temp / dimY;
 
-                double voxelWorldY = origin[1] + y * step[1];
-                double baitDepth = waterMaxZ - voxelWorldY;
+                // Depth calculation: depthIndex represents how deep from surface
+                // sampleY = waterSurfaceLevel - (depthIndex * step.y)
+                // baitDepth = depthIndex * step[1]
+                double baitDepth = depthIndex * step[1];
+                double totalWaterDepth = depthCm / 100.0; // Convert cm to meters
 
                 // 1. Determine Conditions
                 var layers = _calculator.GetLayerTypes(baitDepth, totalWaterDepth).ToList();
@@ -121,7 +127,7 @@ namespace FishWeightPrecomputer
                     }
 
                     double w = _calculator.CalculateWeight(
-                        fishEnvId, x, y, z,
+                        fishEnvId, x, depthIndex, z,
                         baitDepth, totalWaterDepth, bitmask,
                         weatherId, periodKey,
                         fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,

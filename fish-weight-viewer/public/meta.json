@@ -1,8 +1,8 @@
 {
   "dims": {
-    "x": 134,
-    "y": 8,
-    "z": 134,
+    "x": 200,
+    "y": 7,
+    "z": 200,
     "f": 35
   },
   "grid": {
@@ -180,7 +180,7 @@
     "rowMajor": true
   },
   "version": {
-    "buildTimeISO": "2026-01-15T02:09:43.065Z",
+    "buildTimeISO": "2026-01-16T03:37:06.901Z",
     "hash": "weights_bin_v2_multi_scenario"
   }
 }

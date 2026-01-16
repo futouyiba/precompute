@@ -1,6 +1,7 @@
 {
     "mapID": 1006001,
-    "timestamp": "2026-01-07 15:40:37",
+    "timestamp": "2026-01-16 10:11:27",
+    "waterSurfaceLevel": 0.0,
     "global": {
         "name": "Global",
         "type": "Global",
@@ -11,18 +12,18 @@
         "blockCount": 0,
         "origin": [
             12.599998474121094,
-            -6.811878204345703,
+            0.0,
             -147.3000030517578
         ],
         "step": [
-            1.5,
             1.0,
-            1.5
+            1.0,
+            1.0
         ],
         "dim": [
-            134,
-            8,
-            134
+            200,
+            7,
+            200
         ]
     },
     "locals": [
@@ -31,12 +32,12 @@
             "type": "LocalStock",
             "format": "dense",
             "blockSize": 0,
-            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (3)_-2166.npy",
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (3)_-20516.npy",
             "indexFile": "",
             "blockCount": 0,
             "origin": [
                 79.24942779541016,
-                -4.447439193725586,
+                0.0,
                 -92.52035522460938
             ],
             "step": [
@@ -46,7 +47,7 @@
             ],
             "dim": [
                 17,
-                5,
+                6,
                 33
             ]
         },
@@ -55,12 +56,12 @@
             "type": "LocalStock",
             "format": "dense",
             "blockSize": 0,
-            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (2)_-2156.npy",
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (2)_-20506.npy",
             "indexFile": "",
             "blockCount": 0,
             "origin": [
                 58.20930480957031,
-                -4.581302165985107,
+                0.0,
                 -94.22565460205078
             ],
             "step": [
@@ -79,12 +80,12 @@
             "type": "LocalStock",
             "format": "dense",
             "blockSize": 0,
-            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (1)_-2146.npy",
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4 (1)_-20496.npy",
             "indexFile": "",
             "blockCount": 0,
             "origin": [
                 163.55039978027345,
-                -4.432387351989746,
+                0.0,
                 -35.378543853759769
             ],
             "step": [
@@ -103,12 +104,12 @@
             "type": "LocalStock",
             "format": "dense",
             "blockSize": 0,
-            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4_-2136.npy",
+            "dataFile": "Fishing_1006001_LocalStock_stock_sunset_zone_t4_-20486.npy",
             "indexFile": "",
             "blockCount": 0,
             "origin": [
                 159.337890625,
-                -4.511614799499512,
+                0.0,
                 -57.64599609375
             ],
             "step": [

@@ -3,7 +3,7 @@
  * 2D: Y-slice (XZ 平面)
  * 3D: 全量 Volume
  */
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { MetaData, ControlState, SliceStats, PixelInfo } from './types';
 import {
   loadMeta,
@@ -112,8 +112,25 @@ function App() {
     setPixelInfo(info);
   }, []);
 
-  const viewWidth = 800;
-  const viewHeight = 800;
+  const mainViewRef = useRef<HTMLDivElement>(null);
+  const [viewSize, setViewSize] = useState({ width: 800, height: 800 });
+
+  useEffect(() => {
+    if (!mainViewRef.current) return;
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        // Subtract padding (24px * 2 = 48px)
+        const w = entry.contentRect.width - 48;
+        const h = entry.contentRect.height - 48;
+        setViewSize({
+          width: Math.max(400, w),
+          height: Math.max(400, h)
+        });
+      }
+    });
+    resizeObserver.observe(mainViewRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   if (error) {
     return (
@@ -135,7 +152,7 @@ function App() {
         pixelInfo={pixelInfo}
       />
 
-      <main className="main-view">
+      <main className="main-view" ref={mainViewRef}>
         {loading && (
           <div className="loading-overlay">
             <div className="spinner"></div>
@@ -147,8 +164,8 @@ function App() {
           <Heatmap2D
             data={sliceData}
             meta={meta}
-            width={viewWidth}
-            height={viewHeight}
+            width={viewSize.width}
+            height={viewSize.height}
             vmin={0}
             vmax={effectiveVmax}
             useLog={control.useLog}
@@ -163,8 +180,8 @@ function App() {
             vmax={effectiveVmax}
             useLog={control.useLog}
             threshold={0.01}
-            width={viewWidth}
-            height={viewHeight}
+            width={viewSize.width}
+            height={viewSize.height}
           />
         )}
 

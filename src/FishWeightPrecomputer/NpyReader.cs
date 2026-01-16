@@ -36,7 +36,7 @@ namespace FishWeightPrecomputer
 
                 // Parse Header dictionary representation
                 // Example: {'descr': '<i4', 'fortran_order': False, 'shape': (134, 8, 134), }
-                
+
                 // Parse Shape
                 shape = ParseShape(headerStr);
                 string descr = ParseDescr(headerStr);
@@ -53,10 +53,10 @@ namespace FishWeightPrecomputer
                 // Assuming <i4 (int32 little endian)
                 if (descr != "<i4" && descr != "|i4" && descr != "<u4" && descr != "|u4")
                 {
-                     // If it's float but we expect mask, that's weird. 
-                     // But let's support reading as raw bytes and converting.
-                     // For now, strict check.
-                     // Actually let's assume it matches expected type for this specific task
+                    // If it's float but we expect mask, that's weird. 
+                    // But let's support reading as raw bytes and converting.
+                    // For now, strict check.
+                    // Actually let's assume it matches expected type for this specific task
                 }
 
                 byte[] dataBytes = reader.ReadBytes(totalElements * 4);
@@ -67,11 +67,55 @@ namespace FishWeightPrecomputer
             }
         }
 
+        public static long[] ReadInt64(string filePath, out int[] shape)
+        {
+            using (var stream = File.OpenRead(filePath))
+            using (var reader = new BinaryReader(stream))
+            {
+                // 1. Magic String "\x93NUMPY"
+                byte[] magic = reader.ReadBytes(6);
+                if (magic[0] != 0x93 || Encoding.ASCII.GetString(magic, 1, 5) != "NUMPY")
+                    throw new Exception("Invalid NPY file: bad magic string");
+
+                // 2. Version
+                byte major = reader.ReadByte();
+                byte minor = reader.ReadByte();
+
+                // 3. Header Length
+                int headerLen;
+                if (major >= 2)
+                    headerLen = reader.ReadInt32();
+                else
+                    headerLen = reader.ReadUInt16();
+
+                // 4. Header
+                byte[] headerBytes = reader.ReadBytes(headerLen);
+                string headerStr = Encoding.ASCII.GetString(headerBytes).Trim();
+
+                shape = ParseShape(headerStr);
+                string descr = ParseDescr(headerStr);
+                bool fortranOrder = ParseFortranOrder(headerStr);
+
+                if (fortranOrder)
+                    throw new NotSupportedException("Fortran order not supported");
+
+                int totalElements = 1;
+                foreach (var dim in shape) totalElements *= dim;
+
+                // Read 8 bytes per element for int64/long
+                byte[] dataBytes = reader.ReadBytes(totalElements * 8);
+                long[] result = new long[totalElements];
+                Buffer.BlockCopy(dataBytes, 0, result, 0, dataBytes.Length);
+
+                return result;
+            }
+        }
+
         private static int[] ParseShape(string header)
         {
             var match = Regex.Match(header, @"'shape':\s*\((.*?)\)");
             if (!match.Success) throw new Exception("Could not parse shape from header");
-            
+
             string content = match.Groups[1].Value;
             var parts = content.Split(',', StringSplitOptions.RemoveEmptyEntries);
             return parts.Select(p => int.Parse(p.Trim())).ToArray();
