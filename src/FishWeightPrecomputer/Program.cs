@@ -299,11 +299,17 @@ namespace FishWeightPrecomputer
                         long totalElements = totalVoxels * numSpecies;
                         float[] resultData = new float[totalElements];
 
+                        Random rnd = new Random();
                         for (int i = 0; i < voxelData.Length; i++)
                         {
                             long rawValue = voxelData[i];
                             int bitmask = (int)(rawValue & 0xFFFFFFFF); // Low 32 bits: flags
                             int depthCm = (int)(rawValue >> 32);        // High 32 bits: max depth at this column (cm)
+
+                            if ((bitmask & 1) != 0 && rnd.Next(10000) == 0) // Sample ~0.01% of water voxels
+                            {
+                                Console.WriteLine($"[DEBUG SAMPLE] Idx:{i} Raw:{rawValue:X16} High(Depth):{depthCm} Low(Flag):{bitmask} WaterDepth:{depthCm / 100.0}m");
+                            }
 
                             if ((bitmask & 1) == 0) continue; // 0 weight for non-water
 
