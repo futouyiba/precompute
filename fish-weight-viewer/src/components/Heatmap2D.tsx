@@ -33,6 +33,11 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animFrameRef = useRef<number>(0);
 
+    // Transform state: scale, tx, ty
+    const transformRef = useRef({ k: 1, x: 0, y: 0 });
+    const isDraggingRef = useRef(false);
+    const lastMouseRef = useRef({ x: 0, y: 0 });
+
     const render = useCallback(() => {
         const canvas = canvasRef.current;
         if (!canvas || !data || !meta) return;
@@ -41,19 +46,29 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
         if (!ctx) return;
 
         const { dims } = meta;
-        const dx = dims.x;  // X 方向
-        const dz = dims.z;  // Z 方向 (显示为 Y 轴)
+        const dx = dims.x;
+        const dz = dims.z;
 
-        const imageData = ctx.createImageData(dx, dz);
+        // 1. Prepare offscreen buffer (data visualization)
+        // Only recreate if data/LUt changed conceptually, but for now we redo per frame 
+        // because lightweight. Optimization: cache offscreen canvas.
+        // Let's create visuals on an OffscreenCanvas or temp canvas
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = dx;
+        offCanvas.height = dz;
+        const offCtx = offCanvas.getContext('2d');
+        if (!offCtx) return;
+
+        const imageData = offCtx.createImageData(dx, dz);
         const pixels = imageData.data;
         const lut = createColorLUT(vmin, vmax, 256, useLog);
 
-        // 填充像素: data 是 [z * dimX + x] 格式
         for (let z = 0; z < dz; z++) {
             for (let x = 0; x < dx; x++) {
                 const dataIndex = z * dx + x;
                 const value = data[dataIndex] || 0;
 
+                // ... (Color mapping logic same as before)
                 let normalized = (value - vmin) / (vmax - vmin);
                 if (useLog && value > 0) {
                     const logMin = Math.log1p(vmin);
@@ -63,7 +78,6 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
                 normalized = Math.max(0, Math.min(1, normalized));
                 const lutIndex = Math.floor(normalized * 255);
 
-                // 翻转 Z 轴使原点在左下
                 const pixelIndex = ((dz - 1 - z) * dx + x) * 4;
                 pixels[pixelIndex] = lut[lutIndex * 4];
                 pixels[pixelIndex + 1] = lut[lutIndex * 4 + 1];
@@ -71,83 +85,183 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
                 pixels[pixelIndex + 3] = 255;
             }
         }
+        offCtx.putImageData(imageData, 0, 0);
 
-        const offscreen = new OffscreenCanvas(dx, dz);
-        const offCtx = offscreen.getContext('2d');
-        if (offCtx) {
-            offCtx.putImageData(imageData, 0, 0);
-            ctx.imageSmoothingEnabled = false;
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(offscreen, 0, 0, width, height);
-        }
+        // 2. Main Draw with Transform
+        // Clear background
+        ctx.save();
+        ctx.fillStyle = '#0d0d1a'; // App background color
+        ctx.fillRect(0, 0, width, height);
+
+        const { k, x, y } = transformRef.current;
+
+        ctx.translate(x, y);
+        ctx.scale(k, k);
+
+        // Draw the heatmap centered initially if we want, or just at 0,0
+        // We stretch the offscreen canvas (size dx, dz) to fit the VIEW area?
+        // No, usually heatmap pixels map to screen pixels or scaled.
+        // Let's draw it such that it fills 'optimally' or 1:1 if zoomed.
+        // Let's assume initially we want it to fit in viewWidth/Height.
+
+        // But here we just draw it at natural size 1 pixel = 1 data unit? 
+        // No, typically we want it large. 
+        // Let's scale it so it fills the screen initially?
+        // Actually the `transform` should handle the view scaling.
+        // Let's draw the image at 0,0 width: width, height: height?
+        // Previous logic: ctx.drawImage(offscreen, 0, 0, width, height);
+        // This implies stretching.
+        // So `ctx.scale` operates on top of that stretch?
+        // Complex. Let's simplify:
+        // The "Base" drawing is stretched to (width, height).
+        // The transform applies to that 800x800 rect.
+
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(offCanvas, 0, 0, width, height);
+
+        ctx.restore();
+
     }, [data, meta, width, height, vmin, vmax, useLog]);
 
     useEffect(() => {
-        cancelAnimationFrame(animFrameRef.current);
-        animFrameRef.current = requestAnimationFrame(render);
-        return () => cancelAnimationFrame(animFrameRef.current);
+        // Initial render logic or requestAnimationFrame loop
+        // Here we just trigger render when props change.
+        // But for smooth pan/zoom we might want a loop if we had momentum.
+        // Since we don't, just render on interaction.
+        render();
     }, [render]);
 
+    // --- Interaction Handlers ---
+
+    const updateRender = () => {
+        requestAnimationFrame(render);
+    };
+
+    const handleWheel = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        const { k, x, y } = transformRef.current;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        // Zoom centered on mouse
+        let zoom = Math.exp(-e.deltaY * 0.001);
+        // Limit zoom
+        const newK = Math.max(0.1, Math.min(20, k * zoom));
+        const finalZoom = newK / k;
+
+        // x' = mx - (mx - x) * zoom
+        const newX = mx - (mx - x) * finalZoom;
+        const newY = my - (my - y) * finalZoom;
+
+        transformRef.current = { k: newK, x: newX, y: newY };
+        updateRender();
+    }, [render]);
+
+    const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        // Middle mouse (button 1) or Left mouse (button 0) for testing? 
+        // Requirement: Middle mouse pan.
+        if (e.button === 1) { // Middle
+            e.preventDefault();
+            isDraggingRef.current = true;
+            lastMouseRef.current = { x: e.clientX, y: e.clientY };
+        }
+    }, []);
+
     const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!meta || !data) {
-            onHover(null);
-            return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+
+        // Pan
+        if (isDraggingRef.current) {
+            const dx = e.clientX - lastMouseRef.current.x;
+            const dy = e.clientY - lastMouseRef.current.y;
+            transformRef.current.x += dx;
+            transformRef.current.y += dy;
+            lastMouseRef.current = { x: e.clientX, y: e.clientY };
+            updateRender();
+            return; // Don't hover while panning
         }
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        // Hover
+        if (!meta || !data) return;
 
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const { k, x, y } = transformRef.current;
 
+        // Inverse transform to find data coordinate
+        // Screen(mx, my) -> Transformed Space
+        // The drawing logic:
+        // VisualX = DataNormalX * width * k + x
+        // VisualY = DataNormalY * height * k + y
+        // So:
+        // DataNormalX = (mx - x) / (width * k)
+        // But wait, drawImage(offCanvas, 0, 0, width, height) means
+        // Data index x=0 maps to 0, data index x=dx maps to width.
+        // So scaling factor from DATA_GRID to BASE_SCREEN is width/dims.x
+
+        // Let's go step by step:
+        // 1. Un-apply pan/zoom transform
+        const baseScreenX = (mx - x) / k;
+        const baseScreenY = (my - y) / k;
+
+        // 2. Map BaseScreen (0..width, 0..height) to DataGrid (0..dims.x, 0..dims.z)
         const { dims, grid } = meta;
+        const dataX = Math.floor((baseScreenX / width) * dims.x);
 
-        // 转换到数据坐标
-        const x = Math.floor(mouseX / width * dims.x);
-        const z = dims.z - 1 - Math.floor(mouseY / height * dims.z); // 翻转 Z
+        // Remember Y axis flip in visualization (pixelIndex = (dz - 1 - z)...)
+        // VisualY = 0 is Top, corresponds to Data Z = dz-1
+        // VisualY = height is Bottom, corresponds to Data Z = 0
+        // baseScreenY / height = 0..1
+        const normalizedY = baseScreenY / height;
+        const dataZ = dims.z - 1 - Math.floor(normalizedY * dims.z);
 
-        if (x < 0 || x >= dims.x || z < 0 || z >= dims.z) {
+        if (dataX < 0 || dataX >= dims.x || dataZ < 0 || dataZ >= dims.z) {
             onHover(null);
             return;
         }
 
-        const dataIndex = z * dims.x + x;
+        const dataIndex = dataZ * dims.x + dataX;
         const value = data[dataIndex] || 0;
 
-        // 世界坐标
-        const worldX = grid.origin[0] + x * grid.step[0];
+        const worldX = grid.origin[0] + dataX * grid.step[0];
         const worldY = grid.origin[1] + ySlice * grid.step[1];
-        const worldZ = grid.origin[2] + z * grid.step[2];
+        const worldZ = grid.origin[2] + dataZ * grid.step[2];
 
-        onHover({ x, y: z, value, worldX, worldY, worldZ });
-    }, [meta, data, width, height, ySlice, onHover]);
+        onHover({ x: dataX, y: dataZ, value, worldX, worldY, worldZ });
 
-    const handleMouseLeave = useCallback(() => {
-        onHover(null);
-    }, [onHover]);
+    }, [meta, data, width, height, ySlice, onHover, render]);
+
+    const handleMouseUp = useCallback(() => {
+        isDraggingRef.current = false;
+    }, []);
 
     const handleMouseClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        // Prevent click if we were dragging? usually helpful.
+        if (isDraggingRef.current) return;
+
         if (!meta || !onPointClick) return;
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
 
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
+        const { k, x, y } = transformRef.current;
         const { dims } = meta;
 
-        // 转换到数据坐标
-        const x = Math.floor(mouseX / width * dims.x);
-        const z = dims.z - 1 - Math.floor(mouseY / height * dims.z); // 翻转 Z
+        // Same inverse logic as Hover
+        const baseScreenX = (mx - x) / k;
+        const baseScreenY = (my - y) / k;
 
-        if (x < 0 || x >= dims.x || z < 0 || z >= dims.z) {
+        const dataX = Math.floor((baseScreenX / width) * dims.x);
+        const normalizedY = baseScreenY / height;
+        const dataZ = dims.z - 1 - Math.floor(normalizedY * dims.z);
+
+        if (dataX < 0 || dataX >= dims.x || dataZ < 0 || dataZ >= dims.z) {
             return;
         }
 
-        onPointClick(x, ySlice, z);
+        onPointClick(dataX, ySlice, dataZ);
     }, [meta, width, height, ySlice, onPointClick]);
 
     return (
@@ -160,8 +274,14 @@ const Heatmap2D: React.FC<Heatmap2DProps> = ({
                 cursor: 'crosshair',
                 imageRendering: 'pixelated'
             }}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={() => {
+                handleMouseUp();
+                onHover(null);
+            }}
             onClick={handleMouseClick}
         />
     );

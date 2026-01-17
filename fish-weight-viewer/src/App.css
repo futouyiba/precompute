@@ -1,3 +1,76 @@
+/* User Info Styles */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.panel-header h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+/* User Info */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  color: #eee;
+  font-weight: 500;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.login-btn,
+.logout-btn {
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.login-btn {
+  color: #00d9ff;
+  border: 1px solid #00d9ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.login-btn:hover {
+  background: #00d9ff;
+  color: #fff;
+}
+
+.logout-btn {
+  color: #888;
+  font-size: 1.2em;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.logout-btn:hover {
+  color: #ff6b6b;
+}
+
+/* End User Info Styles */
+
 /* 主应用样式 */
 * {
   margin: 0;

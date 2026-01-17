@@ -4,4 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/auth': 'http://localhost:3000',
+      '/api': 'http://localhost:3000',
+      '/data': 'http://localhost:3000' // Proxy data requests to backend in dev to test auth if needed, though usually vite serves public/
+    }
+  }
 })

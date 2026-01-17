@@ -3,6 +3,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import type { MetaData, ControlState, ColorMode, SliceStats, PixelInfo } from '../types';
+import UserInfo from './UserInfo';
 import './ControlPanel.css';
 
 interface ControlPanelProps {
@@ -57,7 +58,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
     return (
         <div className="control-panel">
-            <h2>🐟 Fish Weight Viewer</h2>
+            <div className="panel-header">
+                <h2>🐟 Fish Weight Viewer</h2>
+                <UserInfo />
+            </div>
 
             {/* 视图模式切换 */}
             <section>

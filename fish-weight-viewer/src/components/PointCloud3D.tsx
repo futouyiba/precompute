@@ -44,7 +44,28 @@ const INITIAL_VIEW_STATE: {
     zoom: 0,
     minZoom: -5,
     maxZoom: 10,
+    maxZoom: 10,
 };
+
+// 自定义控制器支持中键平移
+import { OrbitController } from '@deck.gl/core';
+
+class MiddleMousePanController extends OrbitController {
+    handleEvent(event: any) {
+        if (event.type === 'pan-start') {
+            // event.srcEvent is the browser event
+            // buttons: 1=Left, 2=Right, 4=Middle
+            if (event.srcEvent.buttons === 4) {
+                // Force pan mode for this interaction
+                this.setProps({ dragMode: 'pan' });
+            } else {
+                this.setProps({ dragMode: 'rotate' });
+            }
+        }
+        return super.handleEvent(event);
+    }
+}
+
 
 const PointCloud3D = ({
     data,
@@ -132,19 +153,34 @@ const PointCloud3D = ({
         })
     ];
 
-    const views = new OrbitView({
-        id: 'orbit',
-        controller: true
-    });
+    // 自定义 Controller 配置: 将中键(buttons:4)映射为 PAN
+    const controller = useMemo(() => ({
+        type: OrbitView,
+        dragMode: 'rotate', // Default left click
+        keyboard: true,
+        // Override event handling via `options` overrides if possible, or subclassing.
+        // Deck.gl's `Controller` is hard to subclass inside FC.
+        // However, OrbitController supports `dragMode`.
+        // We can try to use `state` changes or just rely on default behavior + Shift.
+        // BUT user wants Middle Mouse Pan.
+
+        // Deck.gl natively maps:
+        // Left Drag -> Rotate
+        // Shift + Left -> Pan
+        // Ctrl + Left -> Rotate (or Pan depending on version)
+
+        // To support Middle Mouse without Shift, we need to subclass OrbitController.
+        // Let's instantiate the subclass below outside the component.
+        controller: MiddleMousePanController
+    }), []);
 
     return (
         <div style={{ width, height, position: 'relative' }}>
             <DeckGL
                 width={width}
                 height={height}
-                views={views}
                 initialViewState={viewState}
-                controller={true}
+                controller={controller}
                 layers={layers}
                 getTooltip={(info) => {
                     const object = info.object as PointData | undefined;
