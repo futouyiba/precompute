@@ -9,9 +9,11 @@ import {
   loadMeta,
   loadAndAggregateYSlices,
   loadAndAggregateVolumes,
-  computeStats
+  computeStats,
+  getFishWeightsAt
 } from './utils/dataLoader';
 import ControlPanel from './components/ControlPanel';
+import DetailPanel from './components/DetailPanel';
 import Heatmap2D from './components/Heatmap2D';
 import PointCloud3D from './components/PointCloud3D';
 import './App.css';
@@ -37,6 +39,11 @@ function App() {
   const [pixelInfo, setPixelInfo] = useState<PixelInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 详情面板状态
+  const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number; z: number } | null>(null);
+  const [pointWeights, setPointWeights] = useState<{ fishName: string; weight: number }[]>([]);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   // 加载 meta.json
   useEffect(() => {
@@ -112,6 +119,7 @@ function App() {
     setPixelInfo(info);
   }, []);
 
+  // 动态视图尺寸 (ResizeObserver)
   const mainViewRef = useRef<HTMLDivElement>(null);
   const [viewSize, setViewSize] = useState({ width: 800, height: 800 });
 
@@ -131,6 +139,24 @@ function App() {
     resizeObserver.observe(mainViewRef.current);
     return () => resizeObserver.disconnect();
   }, []);
+
+  // 点击点位查看详情
+  const handlePointClick = useCallback(async (x: number, y: number, z: number) => {
+    if (!meta) return;
+
+    setSelectedPoint({ x, y, z });
+    setLoadingDetail(true);
+
+    try {
+      const weights = await getFishWeightsAt(x, y, z, meta.fishList, control.selectedScenarioIndex);
+      setPointWeights(weights);
+    } catch (e) {
+      console.error('Failed to load point details:', e);
+      setPointWeights([]);
+    } finally {
+      setLoadingDetail(false);
+    }
+  }, [meta]);
 
   if (error) {
     return (
@@ -152,6 +178,17 @@ function App() {
         pixelInfo={pixelInfo}
       />
 
+      {selectedPoint && (
+        <DetailPanel
+          x={selectedPoint.x}
+          y={selectedPoint.y}
+          z={selectedPoint.z}
+          weights={pointWeights}
+          loading={loadingDetail}
+          onClose={() => setSelectedPoint(null)}
+        />
+      )}
+
       <main className="main-view" ref={mainViewRef}>
         {loading && (
           <div className="loading-overlay">
@@ -171,6 +208,7 @@ function App() {
             useLog={control.useLog}
             ySlice={control.ySlice}
             onHover={handleHover}
+            onPointClick={handlePointClick}
           />
         ) : (
           <PointCloud3D
@@ -182,6 +220,7 @@ function App() {
             threshold={0.01}
             width={viewSize.width}
             height={viewSize.height}
+            onPointClick={handlePointClick}
           />
         )}
 

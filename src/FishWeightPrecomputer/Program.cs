@@ -273,12 +273,14 @@ namespace FishWeightPrecomputer
 
                                 if (doDebug)
                                 {
+                                    string fishName = fishEnvAffinities.FirstOrDefault(f => f.Id == fishEnvId)?.Name ?? $"Unknown_{fishEnvId}";
                                     weight = calculator.CalculateWeightDebug(
                                         fishEnvId, x, depthIndex, z,
                                         baitDepth, waterDepth, bitmask,
                                         weatherId, periodKey,
                                         fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
-                                        weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ
+                                        weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ,
+                                        mapId, scenario, fishName
                                     );
                                 }
                                 else

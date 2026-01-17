@@ -85,12 +85,19 @@ namespace FishWeightPrecomputer
             double weatherWaterTemp,
             double bottomTemp,
             double waterMinZ,
-            double waterMaxZ
+            double waterMaxZ,
+            // 新增参数用于增强日志
+            int mapId,
+            string weatherName,
+            string fishName
         )
         {
-            Console.WriteLine($"--- Debug Calculation for Species {fishEnvId} @ [{voxelX},{voxelY},{voxelZ}] ---");
-            Console.WriteLine($"Inputs: Bitmask={voxelBitmask}, BaitDepth={baitDepth:F2}, WaterDepth={waterDepth:F2}");
-            Console.WriteLine($"Temps: Surface={weatherWaterTemp:F1}, Bottom={bottomTemp:F1}");
+            Console.WriteLine($"==================== 调试计算 ====================");
+            Console.WriteLine($"MapId={mapId}, Weather={weatherName}");
+            Console.WriteLine($"Species: {fishEnvId} ({fishName}) @ Voxel[{voxelX},{voxelY},{voxelZ}]");
+            Console.WriteLine($"BaitDepth={baitDepth:F2}m, MaxDepth(WaterDepth)={waterDepth:F2}m");
+            Console.WriteLine($"SurfaceTemp={weatherWaterTemp:F1}°C, BottomTemp={bottomTemp:F1}°C");
+            Console.WriteLine($"Bitmask={voxelBitmask} -> Structures: {GetHitStructNames(voxelBitmask)}");
 
             if (!_fishEnvAffinities.TryGetValue(fishEnvId, out var fishAffinity))
             {
@@ -336,6 +343,57 @@ namespace FishWeightPrecomputer
                 case "period3_6": return 101060008;
                 default: return 0;
             }
+        }
+
+        /// <summary>
+        /// 将结构类型数字转换为可读名称
+        /// </summary>
+        public static string GetStructTypeName(int structType)
+        {
+            return structType switch
+            {
+                0 => "OpenWater (开阔水域)",
+                1 => "Vegetation (水生植物)",
+                2 => "Rock (岩石)",
+                3 => "DeadWood (枯木)",
+                4 => "Sand (沙地)",
+                5 => "Clay (粘土)",
+                6 => "Gravel (砾石)",
+                7 => "Mud (淤泥)",
+                8 => "Debris (碎片)",
+                9 => "Lily (睡莲)",
+                10 => "Reeds (芦苇)",
+                11 => "Structure (结构物)",
+                _ => $"Unknown ({structType})"
+            };
+        }
+
+        /// <summary>
+        /// 从 voxel bitmask 获取所有命中的结构类型名称
+        /// </summary>
+        public static string GetHitStructNames(int voxelBitmask)
+        {
+            var names = new List<string>();
+            bool hasWater = (voxelBitmask & 1) != 0;
+            bool foundAnyStruct = false;
+
+            // Bits 1-11 mapping to StructType 1-11
+            for (int i = 1; i <= 11; i++)
+            {
+                if ((voxelBitmask & (1 << i)) != 0)
+                {
+                    foundAnyStruct = true;
+                    names.Add(GetStructTypeName(i));
+                }
+            }
+
+            // Bit 0: Water. If water is present but NO other structs, then open water
+            if (hasWater && !foundAnyStruct)
+            {
+                names.Add(GetStructTypeName(0));
+            }
+
+            return names.Count > 0 ? string.Join(", ", names) : "None";
         }
     }
 }

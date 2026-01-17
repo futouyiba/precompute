@@ -183,6 +183,60 @@ export function computeStats(data: Float32Array): SliceStats {
     return { min, max, p99, mean };
 }
 
+/**
+ * 获取特定点 (x, y, z) 所有鱼种的权重
+ * y 为高度层
+ */
+export async function getFishWeightsAt(
+    x: number,
+    y: number,
+    z: number,
+    fishList: { fishId: number; name: string }[],
+    scenarioIndex: number = 0
+): Promise<{ fishName: string; weight: number }[]> {
+    const meta = await loadMeta();
+    const { dims } = meta;
+
+    // 检查边界
+    if (x < 0 || x >= dims.x || y < 0 || y >= dims.y || z < 0 || z >= dims.z) {
+        return [];
+    }
+
+    const promises = fishList.map(async (fish) => {
+        // 1. 优先从 Volume 缓存读取
+        const volCacheKey = `vol_f${fish.fishId}_s${scenarioIndex}`;
+        const cachedVol = volumeCache.get(volCacheKey);
+        if (cachedVol) {
+            // Volume Index: x * dims.y * dims.z + y * dims.z + z
+            const volumeIndex = x * dims.y * dims.z + y * dims.z + z;
+            return { fishName: fish.name, weight: cachedVol[volumeIndex] || 0 };
+        }
+
+        // 2. 从 Slice 缓存读取 (如果 y 匹配)
+        const sliceCacheKey = `y${y}_f${fish.fishId}_s${scenarioIndex}`;
+        const cachedSlice = sliceCache.get(sliceCacheKey);
+        if (cachedSlice) {
+            // Slice Index: z * dims.x + x (Z-major, X-minor)
+            const sliceIndex = z * dims.x + x;
+            return { fishName: fish.name, weight: cachedSlice[sliceIndex] || 0 };
+        }
+
+        // 3. Fallback: 尝试加载 Slice 文件
+        try {
+            const slice = await loadYSlice(y, fish.fishId, scenarioIndex);
+            const sliceIndex = z * dims.x + x;
+            return { fishName: fish.name, weight: slice[sliceIndex] || 0 };
+        } catch (e) {
+            console.error(`Failed to fetch weight for fish ${fish.fishId}`, e);
+            return { fishName: fish.name, weight: 0 };
+        }
+    });
+
+    const results = await Promise.all(promises);
+    // 按权重降序排列
+    return results.sort((a, b) => b.weight - a.weight);
+}
+
 export function clearCache(): void {
     sliceCache.clear();
     volumeCache.clear();

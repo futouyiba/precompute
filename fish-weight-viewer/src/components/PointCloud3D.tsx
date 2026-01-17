@@ -7,6 +7,7 @@ import { OrbitView } from '@deck.gl/core';
 import { PointCloudLayer } from '@deck.gl/layers';
 import type { MetaData } from '../types';
 import { valueToColor } from '../utils/colorMap';
+import MiddlePanOrbitController from '../utils/MiddlePanOrbitController';
 
 interface PointCloud3DProps {
     data: Float32Array | null;  // 3D Volume 数据
@@ -17,12 +18,17 @@ interface PointCloud3DProps {
     threshold: number;
     width: number;
     height: number;
+    onPointClick?: (x: number, y: number, z: number) => void;
 }
 
 interface PointData {
     position: [number, number, number];
     color: [number, number, number, number];
     value: number;
+    // 原始坐标，方便反查
+    gridX: number;
+    gridY: number; // Height
+    gridZ: number; // Forward
 }
 
 const INITIAL_VIEW_STATE: {
@@ -49,7 +55,8 @@ const PointCloud3D = ({
     useLog,
     threshold,
     width,
-    height
+    height,
+    onPointClick
 }: PointCloud3DProps) => {
     // 构建 3D 点云数据
     const points = useMemo<PointData[]>(() => {
@@ -72,39 +79,38 @@ const PointCloud3D = ({
                     // 用户要求: Y=0 最浅, Y 越大越深 -> 视觉上 Y 越大越往下 -> 取反
                     const depthMeters = grid.origin[1] + y * grid.step[1];
                     const unityY = -depthMeters; // Depth as negative height
-                    const unityZ = grid.origin[2] + z * grid.step[2];  // 前后 (FORWARD)
+                    const unityZ = grid.origin[2] + z * grid.step[2];
 
-                    // 映射到 deck.gl (Z-UP 系统)
-                    // deck.X = Unity.X
-                    // deck.Y = Unity.Z (Forward)
-                    // deck.Z = Unity.Y (Up/Height)
-
+                    // 颜色映射
                     const color = valueToColor(value, vmin, vmax, useLog);
 
+                    // DeckGL 坐标系: [Long(X), Lat(Y), Alt(Z)] ?
+                    // OrbitView 坐标系: [X, Y, Z]
                     result.push({
                         position: [unityX, unityZ, unityY],
                         color,
-                        value
+                        value,
+                        gridX: x,
+                        gridY: y,
+                        gridZ: z
                     });
                 }
             }
         }
-
         return result;
     }, [data, meta, vmin, vmax, useLog, threshold]);
 
+    // 计算初始视角中心
     const viewState = useMemo(() => {
         if (!meta) return INITIAL_VIEW_STATE;
-
         const { dims, grid } = meta;
-        const centerX = grid.origin[0] + (dims.x * grid.step[0]) / 2;
-        // Center Height needs to account for negative mapping
-        // Min Height (Surface) = -0 (approx)
-        // Max Height (Bottom) = -(origin[1] + dimmed_Y)
-        // Center = -(Max / 2)
-        const maxDepth = grid.origin[1] + (dims.y * grid.step[1]);
-        const centerY_Height = -maxDepth / 2;
-        const centerZ_Forward = grid.origin[2] + (dims.z * grid.step[2]) / 2;
+        const totalW = dims.x * grid.step[0];
+        const totalH = dims.y * grid.step[1];
+        const totalD = dims.z * grid.step[2];
+
+        const centerX = grid.origin[0] + totalW / 2;
+        const centerY_Height = -(grid.origin[1] + totalH / 2);
+        const centerZ_Forward = grid.origin[2] + totalD / 2;
 
         return {
             ...INITIAL_VIEW_STATE,
@@ -124,6 +130,14 @@ const PointCloud3D = ({
             getColor: (d: PointData) => d.color,
             pointSize: 3,
             pickable: true,
+            onClick: (info) => {
+                // Ignore clicks if panning
+                // deck.gl handles click distinguishing but good to be safe
+                if (onPointClick && info.object) {
+                    const p = info.object as PointData;
+                    onPointClick(p.gridX, p.gridY, p.gridZ);
+                }
+            }
         })
     ];
 
@@ -139,12 +153,32 @@ const PointCloud3D = ({
                 height={height}
                 views={views}
                 initialViewState={viewState}
-                controller={true}
+                controller={{
+                    type: MiddlePanOrbitController,
+                    dragRotate: true,
+                    dragPan: true,
+                    scrollZoom: true,
+                    doubleClickZoom: true,
+                    touchRotate: true,
+                    keyboard: true
+                }}
                 layers={layers}
                 getTooltip={(info) => {
                     const object = info.object as PointData | undefined;
-                    return object ? `Value: ${object.value.toFixed(4)}` : null;
+                    if (!object) return null;
+                    return {
+                        html: `<div style="background: rgba(20,20,40,0.9); padding: 8px; border-radius: 4px; color: #eee;">
+                            <div><strong>Grid:</strong> [${object.gridX}, ${object.gridY}, ${object.gridZ}]</div>
+                            <div><strong>Value:</strong> ${object.value.toFixed(4)}</div>
+                        </div>`,
+                        style: {
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            zIndex: 1000
+                        }
+                    };
                 }}
+                getCursor={({ isDragging }) => isDragging ? 'grabbing' : 'grab'}
             />
             <div style={{
                 position: 'absolute',
