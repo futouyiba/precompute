@@ -89,12 +89,13 @@ namespace FishWeightPrecomputer
             // 新增参数用于增强日志
             int mapId,
             string weatherName,
-            string fishName
+            string fishName,
+            int releaseId
         )
         {
             Console.WriteLine($"==================== 调试计算 ====================");
             Console.WriteLine($"MapId={mapId}, Weather={weatherName}");
-            Console.WriteLine($"Species: {fishEnvId} ({fishName}) @ Voxel[{voxelX},{voxelY},{voxelZ}]");
+            Console.WriteLine($"Species: {fishEnvId} ({fishName}) - Release: {releaseId} @ Voxel[{voxelX},{voxelY},{voxelZ}]");
             Console.WriteLine($"BaitDepth={baitDepth:F2}m, MaxDepth(WaterDepth)={waterDepth:F2}m");
             Console.WriteLine($"SurfaceTemp={weatherWaterTemp:F1}°C, BottomTemp={bottomTemp:F1}°C");
             Console.WriteLine($"Bitmask={voxelBitmask} -> Structures: {GetHitStructNames(voxelBitmask)}");

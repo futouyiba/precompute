@@ -280,7 +280,7 @@ namespace FishWeightPrecomputer
                                         weatherId, periodKey,
                                         fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
                                         weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ,
-                                        mapId, scenario, fishName
+                                        mapId, scenario, fishName, release.ReleaseId
                                     );
                                 }
                                 else
