@@ -9,6 +9,12 @@
 *   请确保已安装 **Node.js** (推荐 LTS 版本, v18+)。
 *   验证安装: `node -v`
 
+### 0. 进入路径
+
+```bash
+cd fish-weight-viewer
+```
+
 ### 1. 数据准备 (Data Preparation)
 
 **重要**：在启动可视化之前，必须先将 C# 预计算生成的二进制结果转换为 Web 可读的格式。
