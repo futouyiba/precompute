@@ -165,16 +165,23 @@ export function computeStats(data: Float32Array): SliceStats {
 
     let min = Infinity;
     let max = -Infinity;
-    let sum = 0;
+    let validDataSum = 0;
+    let validDataCount = 0;
 
     for (let i = 0; i < data.length; i++) {
         const v = data[i];
-        if (v < min) min = v;
-        if (v > max) max = v;
-        sum += v;
+
+        if (v > 0)
+        {
+            if (v < min) min = v;
+            if (v > max) max = v;
+            validDataSum += v;
+
+            validDataCount++;
+        }
     }
 
-    const mean = sum / data.length;
+    const mean = validDataSum / validDataCount;
 
     const sorted = Float32Array.from(data).sort();
     const p99Index = Math.floor(sorted.length * 0.99);
