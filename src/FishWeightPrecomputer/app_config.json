@@ -1,4 +1,5 @@
 {
+    "MapDataPath": "../ExportedData/Fishing_1006001_Dense",
     "DebugLimit": 2,
     "WeatherSequence": [
         "SS_weather_sunny6_9",

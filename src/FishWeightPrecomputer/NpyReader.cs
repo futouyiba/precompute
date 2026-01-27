@@ -134,5 +134,49 @@ namespace FishWeightPrecomputer
             if (!match.Success) return false;
             return bool.Parse(match.Groups[1].Value);
         }
+
+        public static float[] ReadFloat32(string filePath, out int[] shape)
+        {
+            using (var stream = File.OpenRead(filePath))
+            using (var reader = new BinaryReader(stream))
+            {
+                // 1. Magic String "\x93NUMPY"
+                byte[] magic = reader.ReadBytes(6);
+                if (magic[0] != 0x93 || Encoding.ASCII.GetString(magic, 1, 5) != "NUMPY")
+                    throw new Exception("Invalid NPY file: bad magic string");
+
+                // 2. Version
+                byte major = reader.ReadByte();
+                byte minor = reader.ReadByte();
+
+                // 3. Header Length
+                int headerLen;
+                if (major >= 2)
+                    headerLen = reader.ReadInt32();
+                else
+                    headerLen = reader.ReadUInt16();
+
+                // 4. Header
+                byte[] headerBytes = reader.ReadBytes(headerLen);
+                string headerStr = Encoding.ASCII.GetString(headerBytes).Trim();
+
+                shape = ParseShape(headerStr);
+                string descr = ParseDescr(headerStr);
+                bool fortranOrder = ParseFortranOrder(headerStr);
+
+                if (fortranOrder)
+                    throw new NotSupportedException("Fortran order not supported");
+
+                int totalElements = 1;
+                foreach (var dim in shape) totalElements *= dim;
+
+                // Read 4 bytes per element for float32
+                byte[] dataBytes = reader.ReadBytes(totalElements * 4);
+                float[] result = new float[totalElements];
+                Buffer.BlockCopy(dataBytes, 0, result, 0, dataBytes.Length);
+
+                return result;
+            }
+        }
     }
 }

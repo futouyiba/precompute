@@ -74,8 +74,42 @@ namespace FishWeightPrecomputer
                     fishEnvAffinities
                 );
 
+                // 3.5 Load App Config
+                string appConfigPath = Path.Combine(rootPath, "src/FishWeightPrecomputer/app_config.json");
+                if (!File.Exists(appConfigPath)) appConfigPath = "app_config.json";
+
+                int debugLimit = 2;
+                List<string> weatherSequence = new List<string>();
+                string configMapDataPath = "../ExportedData/Fishing_1006001_Dense";
+
+                if (File.Exists(appConfigPath))
+                {
+                    try
+                    {
+                        var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(appConfigPath));
+                        if (jsonNode != null)
+                        {
+                            if (jsonNode["DebugLimit"] != null) debugLimit = jsonNode["DebugLimit"].GetValue<int>();
+                            if (jsonNode["MapDataPath"] != null) configMapDataPath = jsonNode["MapDataPath"].GetValue<string>();
+                            if (jsonNode["WeatherSequence"] != null)
+                            {
+                                var seqArray = jsonNode["WeatherSequence"].AsArray();
+                                foreach (var item in seqArray) weatherSequence.Add(item.GetValue<string>());
+                            }
+                        }
+                    }
+                    catch (Exception ex) { Console.WriteLine($"Failed to load app_config.json: {ex.Message}"); }
+                }
+
+                if (weatherSequence.Count == 0) weatherSequence.Add("SS_weather_sunny9_12");
+
                 // 4. Determine Map ID dynamically
-                string mapDataJsonPath = Path.Combine(rootPath, @"Fishing_1006001_Dense_20260107_154037\map_data.json");
+                string mapDataJsonPath = Path.GetFullPath(Path.Combine(rootPath, configMapDataPath, "map_data.json"));
+                if (!File.Exists(mapDataJsonPath))
+                {
+                    // Fallback to local precompute folder if config path not found
+                    mapDataJsonPath = Path.Combine(rootPath, @"Fishing_1006001_Dense\map_data.json");
+                }
                 if (!File.Exists(mapDataJsonPath))
                 {
                     Console.WriteLine($"Error: map_data.json not found at {mapDataJsonPath}");
@@ -144,33 +178,30 @@ namespace FishWeightPrecomputer
                 int dimZ = dimensions[2];
                 Console.WriteLine($"Map Dimensions: {dimX}x{dimY}x{dimZ}");
 
-                // 6. Iterate and Calculate
-                string appConfigPath = Path.Combine(rootPath, "src/FishWeightPrecomputer/app_config.json");
-                if (!File.Exists(appConfigPath)) appConfigPath = "app_config.json";
-
-                int debugLimit = 2;
-                List<string> weatherSequence = new List<string>();
-
-                if (File.Exists(appConfigPath))
+                // Load Depth Data (new format: separate file)
+                float[] depthData = null;
+                int[] depthDimensions = null;
+                string depthFile = mapDataConfig.Global.DepthFile;
+                if (!string.IsNullOrEmpty(depthFile))
                 {
-                    try
+                    string depthPath = Path.Combine(mapDir, depthFile);
+                    if (File.Exists(depthPath))
                     {
-                        var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(appConfigPath));
-                        if (jsonNode != null)
-                        {
-                            if (jsonNode["DebugLimit"] != null) debugLimit = jsonNode["DebugLimit"].GetValue<int>();
-                            if (jsonNode["WeatherSequence"] != null)
-                            {
-                                var seqArray = jsonNode["WeatherSequence"].AsArray();
-                                foreach (var item in seqArray) weatherSequence.Add(item.GetValue<string>());
-                            }
-                        }
+                        Console.WriteLine($"Loading Depth Data: {depthPath}");
+                        depthData = NpyReader.ReadFloat32(depthPath, out depthDimensions);
+                        Console.WriteLine($"Depth Dimensions: {depthDimensions[0]}x{depthDimensions[1]}");
                     }
-                    catch (Exception ex) { Console.WriteLine($"Failed to load app_config.json: {ex.Message}"); }
+                    else
+                    {
+                        Console.WriteLine($"Warning: Depth file not found: {depthPath}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Warning: No depthFile specified in map_data.json. Using fallback (packed depth).");
                 }
 
-                if (weatherSequence.Count == 0) weatherSequence.Add("SS_weather_sunny9_12");
-
+                // 6. Iterate and Calculate
                 double waterMinZ = mapBasic?.WaterMinZ ?? -20.0;
                 double waterMaxZ = mapBasic?.WaterMaxZ ?? 0.0;
                 long totalVoxels = (long)dimX * dimY * dimZ;
@@ -242,16 +273,10 @@ namespace FishWeightPrecomputer
                         for (int i = 0; i < voxelData.Length; i++)
                         {
                             long rawValue = voxelData[i];
-                            int bitmask = (int)(rawValue & 0xFFFFFFFF); // Low 32 bits: flags
-                            int depthCm = (int)(rawValue >> 32);        // High 32 bits: max depth (cm)
+                            // New format: rawValue is pure flags (int64), depth is in separate file
+                            long bitmask = rawValue;
 
                             if ((bitmask & 1) == 0) continue;
-
-                            // Debug: Write Depth (Only for first scenario to avoid duplicate IO)
-                            if (scenarioIdx == 0)
-                            {
-                                debugWriter.WriteLine(depthCm / 100.0);
-                            }
 
                             int temp = i;
                             int z = temp % dimZ;
@@ -259,8 +284,31 @@ namespace FishWeightPrecomputer
                             int depthIndex = temp % dimY;
                             int x = temp / dimY;
 
+                            // Get water depth from separate depth array
+                            double waterDepth = 0.0;
+                            if (depthData != null && depthDimensions != null)
+                            {
+                                // Depth data is 2D: [dimX, dimZ]
+                                int depthIdx = x * depthDimensions[1] + z;
+                                if (depthIdx >= 0 && depthIdx < depthData.Length)
+                                {
+                                    waterDepth = depthData[depthIdx];
+                                }
+                            }
+                            else
+                            {
+                                // Fallback: Try old format (packed in high 32 bits) for backward compatibility
+                                int depthCm = (int)(rawValue >> 32);
+                                waterDepth = depthCm / 100.0;
+                            }
+
+                            // Debug: Write Depth (Only for first scenario to avoid duplicate IO)
+                            if (scenarioIdx == 0)
+                            {
+                                debugWriter.WriteLine(waterDepth);
+                            }
+
                             double baitDepth = depthIndex * step[1];
-                            double waterDepth = depthCm / 100.0;
 
                             for (int s = 0; s < numSpecies; s++)
                             {

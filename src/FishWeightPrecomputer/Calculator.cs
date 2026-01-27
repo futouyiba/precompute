@@ -41,7 +41,7 @@ namespace FishWeightPrecomputer
         public double CalculateWeight(
             int fishEnvId,
             int voxelX, int voxelY, int voxelZ,
-            double baitDepth, double waterDepth, int voxelBitmask,
+            double baitDepth, double waterDepth, long voxelBitmask,
             int weatherId, string periodKey,
             double baseWeight, double minEnvCoeff,
             double weatherWaterTemp,
@@ -79,7 +79,7 @@ namespace FishWeightPrecomputer
         public double CalculateWeightDebug(
             int fishEnvId,
             int voxelX, int voxelY, int voxelZ,
-            double baitDepth, double waterDepth, int voxelBitmask,
+            double baitDepth, double waterDepth, long voxelBitmask,
             int weatherId, string periodKey,
             double baseWeight, double minEnvCoeff,
             double weatherWaterTemp,
@@ -168,17 +168,17 @@ namespace FishWeightPrecomputer
             return coeff;
         }
 
-        private double CalculateStructAffinity(int structId, int voxelBitmask)
+        private double CalculateStructAffinity(int structId, long voxelBitmask)
         {
             if (!_structAffinities.TryGetValue(structId, out var profile)) return 1.0;
 
             double maxCoeff = 0;
             bool foundAnyStruct = false;
 
-            // Bits 1-11 mapping to StructType 1-11
-            for (int i = 1; i <= 11; i++)
+            // Bits 1-24 mapping to StructType 1-24 (extended for new structure types)
+            for (int i = 1; i <= 24; i++)
             {
-                if ((voxelBitmask & (1 << i)) != 0)
+                if ((voxelBitmask & (1L << i)) != 0)
                 {
                     foundAnyStruct = true;
                     var item = profile.Items.FirstOrDefault(x => x.StructType == i);
@@ -189,7 +189,7 @@ namespace FishWeightPrecomputer
                 }
             }
 
-            // Bit 0: Water. If water is present but NO other structs (1-11), then it is Open Water (Type 0).
+            // Bit 0: Water. If water is present but NO other structs (1-24), then it is Open Water (Type 0).
             bool hasWater = (voxelBitmask & 1) != 0;
             if (hasWater && !foundAnyStruct)
             {
@@ -354,17 +354,30 @@ namespace FishWeightPrecomputer
             return structType switch
             {
                 0 => "OpenWater (开阔水域)",
-                1 => "Vegetation (水生植物)",
-                2 => "Rock (岩石)",
-                3 => "DeadWood (枯木)",
-                4 => "Sand (沙地)",
-                5 => "Clay (粘土)",
-                6 => "Gravel (砾石)",
-                7 => "Mud (淤泥)",
-                8 => "Debris (碎片)",
-                9 => "Lily (睡莲)",
-                10 => "Reeds (芦苇)",
-                11 => "Structure (结构物)",
+                1 => "WaterGrass (水草)",
+                2 => "Stone (石头)",
+                3 => "Driftwood (浮木)",
+                4 => "Pier (码头/栈桥)",
+                5 => "DeepPit (深坑)",
+                6 => "Ridge (坎)",
+                7 => "Fault (断层)",
+                8 => "RockShelf (乱石底/石架)",
+                9 => "Bay (湾)",
+                10 => "Mud (泥底)",
+                11 => "Gravel (碎石底)",
+                12 => "Dam (水坝)",
+                13 => "MouthOfSpring (泉眼)",
+                14 => "Vortex (旋涡)",
+                15 => "Sandbar (沙洲)",
+                16 => "Shoal (浅滩)",
+                17 => "Duckweed (浮萍)",
+                18 => "Reed (芦苇)",
+                19 => "Precipice (悬崖)",
+                20 => "Wharf (码头)",
+                21 => "WaterInlet (进水口)",
+                22 => "WaterOutlet (出水口)",
+                23 => "DarkIsland (暗岛)",
+                24 => "SandBottom (沙底)",
                 _ => $"Unknown ({structType})"
             };
         }
@@ -372,16 +385,16 @@ namespace FishWeightPrecomputer
         /// <summary>
         /// 从 voxel bitmask 获取所有命中的结构类型名称
         /// </summary>
-        public static string GetHitStructNames(int voxelBitmask)
+        public static string GetHitStructNames(long voxelBitmask)
         {
             var names = new List<string>();
             bool hasWater = (voxelBitmask & 1) != 0;
             bool foundAnyStruct = false;
 
-            // Bits 1-11 mapping to StructType 1-11
-            for (int i = 1; i <= 11; i++)
+            // Bits 1-24 mapping to StructType 1-24 (extended)
+            for (int i = 1; i <= 24; i++)
             {
-                if ((voxelBitmask & (1 << i)) != 0)
+                if ((voxelBitmask & (1L << i)) != 0)
                 {
                     foundAnyStruct = true;
                     names.Add(GetStructTypeName(i));

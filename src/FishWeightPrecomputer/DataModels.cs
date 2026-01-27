@@ -222,6 +222,9 @@ namespace FishWeightPrecomputer
         [JsonPropertyName("dataFile")]
         public string DataFile { get; set; }
 
+        [JsonPropertyName("depthFile")]
+        public string DepthFile { get; set; }
+
         [JsonPropertyName("origin")]
         public float[] Origin { get; set; }
 
