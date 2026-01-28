@@ -8,6 +8,27 @@ namespace FishWeightPrecomputer
 {
     class Program
     {
+        // Static fields to share state across methods
+        private static string rootPath;
+        private static Calculator calculator;
+        private static long[] voxelData;
+        private static int dimX, dimY, dimZ;
+        private static float[] depthData;
+        private static int[] depthDimensions;
+        private static float[] step;
+        private static List<int> speciesList;
+        private static int numSpecies;
+        private static List<StockRelease> activeReleases;
+        private static Dictionary<string, FishRelease> fishReleasesRaw;
+        private static List<FishEnvAffinity> fishEnvAffinities;
+        private static List<string> weatherSequence;
+        private static List<WeatherFactor> weatherFactors;
+        private static List<FishPond> activePonds;
+        private static int mapId;
+        private static double waterMinZ, waterMaxZ;
+        private static int debugLimit;
+        private static long totalVoxels;
+
         static void Main(string[] args)
         {
             try
@@ -15,7 +36,7 @@ namespace FishWeightPrecomputer
                 Console.WriteLine("Starting Fish Weight Precomputer (Dynamic Map ID)...");
 
                 // 1. Setup Paths
-                string rootPath = AppContext.BaseDirectory;
+                rootPath = AppContext.BaseDirectory;
                 while (!Directory.Exists(Path.Combine(rootPath, "data")) && Directory.GetParent(rootPath) != null)
                 {
                     rootPath = Directory.GetParent(rootPath).FullName;
@@ -47,24 +68,24 @@ namespace FishWeightPrecomputer
                 var layerAffinities = layerAffinitiesRaw.Values.ToList();
 
                 var weatherFactorsRaw = dataLoader.LoadJson<Dictionary<string, WeatherFactor>>("weather_factor.json");
-                var weatherFactors = weatherFactorsRaw.Values.ToList();
+                weatherFactors = weatherFactorsRaw.Values.ToList();
 
                 var periodAffinitiesRaw = dataLoader.LoadJson<Dictionary<string, PeriodAffinity>>("period_affinity.json");
                 var periodAffinities = periodAffinitiesRaw.Values.ToList();
 
                 var fishEnvAffinitiesRaw = dataLoader.LoadJson<Dictionary<string, FishEnvAffinity>>("fish_env_affinity.json");
-                var fishEnvAffinities = fishEnvAffinitiesRaw.Values.ToList();
+                fishEnvAffinities = fishEnvAffinitiesRaw.Values.ToList();
 
                 var fishStocksRaw = dataLoader.LoadJson<Dictionary<string, FishStock>>("fish_stock.json");
                 var fishPondsRaw = dataLoader.LoadJson<Dictionary<string, FishPond>>("fish_pond_list.json");
                 var mapBasicConfigs = dataLoader.LoadJson<Dictionary<string, MapBasicConfig>>("map_basic.json");
 
                 // Release Data
-                var fishReleasesRaw = dataLoader.LoadJson<Dictionary<string, FishRelease>>("fish_release.json");
+                fishReleasesRaw = dataLoader.LoadJson<Dictionary<string, FishRelease>>("fish_release.json");
                 var stockReleasesRaw = dataLoader.LoadJson<Dictionary<string, StockRelease>>("stock_release.json");
 
                 // 3. Initialize Calculator
-                var calculator = new Calculator(
+                calculator = new Calculator(
                     affinityConst,
                     structAffinities,
                     tempAffinities,
@@ -78,8 +99,8 @@ namespace FishWeightPrecomputer
                 string appConfigPath = Path.Combine(rootPath, "src/FishWeightPrecomputer/app_config.json");
                 if (!File.Exists(appConfigPath)) appConfigPath = "app_config.json";
 
-                int debugLimit = 2;
-                List<string> weatherSequence = new List<string>();
+                debugLimit = 2;
+                weatherSequence = new List<string>();
                 string configMapDataPath = "../ExportedData/Fishing_1006001_Dense";
 
                 if (File.Exists(appConfigPath))
@@ -119,7 +140,7 @@ namespace FishWeightPrecomputer
                 string mapDataJson = File.ReadAllText(mapDataJsonPath);
                 var mapDataConfig = System.Text.Json.JsonSerializer.Deserialize<MapDataConfig>(mapDataJson);
                 var origin = mapDataConfig.Global.Origin;
-                var step = mapDataConfig.Global.Step;
+                step = mapDataConfig.Global.Step;
                 Console.WriteLine($"Loaded map_data.json: Origin=[{origin[0]}, {origin[1]}, {origin[2]}]");
 
                 string globalNpyFile = mapDataConfig.Global.DataFile;
@@ -135,7 +156,7 @@ namespace FishWeightPrecomputer
                     return;
                 }
 
-                int mapId = mapSceneInfo.Desc;
+                mapId = mapSceneInfo.Desc;
                 Console.WriteLine($"Resolved Game Map ID: {mapId}");
 
                 if (!mapBasicConfigs.TryGetValue(mapId.ToString(), out var mapBasic))
@@ -144,9 +165,9 @@ namespace FishWeightPrecomputer
                 }
 
                 // Filter Active Species
-                var activePonds = fishPondsRaw.Values.Where(p => p.MapId == mapId).ToList();
+                activePonds = fishPondsRaw.Values.Where(p => p.MapId == mapId).ToList();
                 var activeSpecies = new HashSet<int>();
-                var activeReleases = new List<StockRelease>();
+                activeReleases = new List<StockRelease>();
 
                 foreach (var pond in activePonds)
                 {
@@ -171,16 +192,16 @@ namespace FishWeightPrecomputer
 
                 Console.WriteLine($"Loading NPY Data: {npyPath}");
                 int[] dimensions;
-                long[] voxelData = NpyReader.ReadInt64(npyPath, out dimensions);
+                voxelData = NpyReader.ReadInt64(npyPath, out dimensions);
 
-                int dimX = dimensions[0];
-                int dimY = dimensions[1];
-                int dimZ = dimensions[2];
+                dimX = dimensions[0];
+                dimY = dimensions[1];
+                dimZ = dimensions[2];
                 Console.WriteLine($"Map Dimensions: {dimX}x{dimY}x{dimZ}");
 
-                // Load Depth Data (new format: separate file)
-                float[] depthData = null;
-                int[] depthDimensions = null;
+                // Load Depth Data
+                depthData = null;
+                depthDimensions = null;
                 string depthFile = mapDataConfig.Global.DepthFile;
                 if (!string.IsNullOrEmpty(depthFile))
                 {
@@ -202,185 +223,315 @@ namespace FishWeightPrecomputer
                 }
 
                 // 6. Iterate and Calculate
-                double waterMinZ = mapBasic?.WaterMinZ ?? -20.0;
-                double waterMaxZ = mapBasic?.WaterMaxZ ?? 0.0;
-                long totalVoxels = (long)dimX * dimY * dimZ;
-                var speciesList = activeSpecies
+                waterMinZ = mapBasic?.WaterMinZ ?? -20.0;
+                waterMaxZ = mapBasic?.WaterMaxZ ?? 0.0;
+                totalVoxels = (long)dimX * dimY * dimZ;
+                speciesList = activeSpecies
                     .OrderBy(id => fishEnvAffinities.FirstOrDefault(f => f.Id == id)?.Name ?? id.ToString())
                     .ToList();
-                int numSpecies = speciesList.Count;
+                numSpecies = speciesList.Count;
 
                 Console.WriteLine("\nSelect Mode:");
                 Console.WriteLine("1. Normal Precompute (Binary Output) - All Scenarios");
                 Console.WriteLine("2. Aggregation Analysis (JSON Output) - First Scenario Only");
-                Console.Write("Enter choice (default 1): ");
-                // string modeInput = Console.ReadLine();
-                string modeInput = "1"; // Auto-select for batch (or based on previous context?) User is run_all.bat 
-                                        // Wait, previous code had Console.ReadLine(). I should keep it?
-                                        // But run_all.bat might hang if waiting input.
-                                        // The previous code had Console.ReadLine(). I'll restore it but check if Input Redirection is used?
-                                        // Just restore logic.
-                                        // Actually, for debug run, user might want to skip input?
-                                        // I'll keep Console.ReadLine() as it was.
-                                        // Re-checking Step 427: "string modeInput = Console.ReadLine();"
 
-                // NOTE: Since I am overwriting, I should make sure I don't break interactivity if user expects it.
-                // But user is running run_all.bat which might pipe input?
-                // Oh wait, logs showed user failed because of CTRL+C.
-                // I'll assume standard input.
-
-                // Let's implement CSV DUMP as a forced side-effect of Normal Mode.
-
-                bool isAggregationMode = false; // Default to Normal for this debug task
-
-                // --- NORMAL PRECOMPUTE MODE ---
-                string outputPath = Path.Combine(rootPath, "weights.bin");
-                Console.WriteLine($"Saving results to {outputPath}...");
-
-                // Debug CSV Writer
-                string csvPath = Path.Combine(rootPath, "depths_debug.csv");
-                Console.WriteLine($"Writing debug depths to {csvPath}...");
-
-                using (var debugWriter = new StreamWriter(csvPath))
-                using (var stream = File.Open(outputPath, FileMode.Create))
-                using (var writer = new BinaryWriter(stream))
+                string modeInput = "";
+                if (args.Length > 0)
                 {
-                    debugWriter.WriteLine("WaterDepthMeters");
+                    string arg = args[0].ToLower();
+                    if (arg == "normal" || arg == "1") modeInput = "1";
+                    else if (arg == "aggregate" || arg == "2") modeInput = "2";
 
-                    writer.Write(0x46495348); // Magic "FISH"
-                    writer.Write(2); // Version 2
-                    writer.Write(dimX);
-                    writer.Write(dimY);
-                    writer.Write(dimZ);
-                    writer.Write(numSpecies);
-                    writer.Write(weatherSequence.Count);
-
-                    foreach (var sid in speciesList) writer.Write(sid);
-                    foreach (var scen in weatherSequence) writer.Write(scen);
-
-                    int scenarioIdx = 0;
-                    foreach (var scenario in weatherSequence)
+                    if (!string.IsNullOrEmpty(modeInput))
                     {
-                        Console.WriteLine($"\n--- Processing Scenario {scenarioIdx + 1}/{weatherSequence.Count}: {scenario} ---");
-                        ParseScenario(scenario, weatherFactors, activePonds, out int weatherId, out string periodKey, out double weatherWaterTemp, out double bottomTemp);
-
-                        int processedCount = 0;
-                        int debugCount = 0;
-
-                        long totalElements = totalVoxels * numSpecies;
-                        float[] resultData = new float[totalElements];
-
-                        for (int i = 0; i < voxelData.Length; i++)
-                        {
-                            long rawValue = voxelData[i];
-                            // New format: rawValue is pure flags (int64), depth is in separate file
-                            long bitmask = rawValue;
-
-                            if ((bitmask & 1) == 0) continue;
-
-                            int temp = i;
-                            int z = temp % dimZ;
-                            temp /= dimZ;
-                            int depthIndex = temp % dimY;
-                            int x = temp / dimY;
-
-                            // Get water depth from separate depth array
-                            double waterDepth = 0.0;
-                            if (depthData != null && depthDimensions != null)
-                            {
-                                // Depth data is 2D: [dimX, dimZ]
-                                int depthIdx = x * depthDimensions[1] + z;
-                                if (depthIdx >= 0 && depthIdx < depthData.Length)
-                                {
-                                    waterDepth = depthData[depthIdx];
-                                }
-                            }
-                            else
-                            {
-                                // Fallback: Try old format (packed in high 32 bits) for backward compatibility
-                                int depthCm = (int)(rawValue >> 32);
-                                waterDepth = depthCm / 100.0;
-                            }
-
-                            // Debug: Write Depth (Only for first scenario to avoid duplicate IO)
-                            if (scenarioIdx == 0)
-                            {
-                                debugWriter.WriteLine(waterDepth);
-                            }
-
-                            double baitDepth = depthIndex * step[1];
-
-                            for (int s = 0; s < numSpecies; s++)
-                            {
-                                int fishEnvId = speciesList[s];
-                                var release = activeReleases.FirstOrDefault(r => r.FishEnvId == fishEnvId);
-                                if (release == null || !fishReleasesRaw.TryGetValue(release.ReleaseId.ToString(), out var fishRelease)) continue;
-
-                                bool doDebug = (debugCount < debugLimit && scenarioIdx == 0);
-                                double weight;
-
-                                if (doDebug)
-                                {
-                                    string fishName = fishEnvAffinities.FirstOrDefault(f => f.Id == fishEnvId)?.Name ?? $"Unknown_{fishEnvId}";
-                                    weight = calculator.CalculateWeightDebug(
-                                        fishEnvId, x, depthIndex, z,
-                                        baitDepth, waterDepth, bitmask,
-                                        weatherId, periodKey,
-                                        fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
-                                        weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ,
-                                        mapId, scenario, fishName, release.ReleaseId
-                                    );
-                                }
-                                else
-                                {
-                                    weight = calculator.CalculateWeight(
-                                        fishEnvId, x, depthIndex, z,
-                                        baitDepth, waterDepth, bitmask,
-                                        weatherId, periodKey,
-                                        fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
-                                        weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ
-                                    );
-                                }
-
-                                long flatIndex = ((long)x * dimY * dimZ + depthIndex * dimZ + z) * numSpecies + s;
-                                resultData[flatIndex] = (float)weight;
-                            }
-
-                            if (debugCount < debugLimit && scenarioIdx == 0)
-                            {
-                                debugCount++;
-                                Console.WriteLine("--------------------------------------------------");
-                            }
-                            processedCount++;
-                            if (processedCount % 50000 == 0) Console.Write($"\rCalc... {processedCount}/{totalVoxels}");
-                        }
-
-                        Console.WriteLine($"\nWriting {resultData.Length} floats for scenario {scenario}...");
-                        foreach (var val in resultData) writer.Write(val);
-
-                        scenarioIdx++;
+                        Console.WriteLine($"Using mode from command-line argument: {arg}");
                     }
                 }
 
-                var speciesMapping = speciesList.Select((id, index) => new
+                if (string.IsNullOrEmpty(modeInput))
                 {
-                    index = index,
-                    fishEnvId = id,
-                    name = fishEnvAffinities.FirstOrDefault(f => f.Id == id)?.Name ?? $"Unknown_{id}"
-                }).ToList();
+                    Console.Write("Enter choice (default 1 / keywords: normal, aggregate): ");
+                    modeInput = Console.ReadLine().ToLower();
+                    if (modeInput == "normal") modeInput = "1";
+                    else if (modeInput == "aggregate") modeInput = "2";
+                }
 
-                string mappingJson = System.Text.Json.JsonSerializer.Serialize(speciesMapping, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                string mappingPath = Path.Combine(rootPath, "species_mapping.json");
-                File.WriteAllText(mappingPath, mappingJson);
-                Console.WriteLine($"Species mapping saved to: {mappingPath}");
+                if (string.IsNullOrEmpty(modeInput)) modeInput = "1";
 
-                Console.WriteLine("Done.");
+                bool isAggregationMode = (modeInput == "2");
+
+                if (isAggregationMode)
+                {
+                    RunAggregationAnalysis();
+                }
+                else
+                {
+                    RunNormalPrecompute();
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
             }
+        }
+
+        private static void RunAggregationAnalysis()
+        {
+            // --- AGGREGATION ANALYSIS MODE ---
+            string aggOutputPath = Path.Combine(rootPath, "agg_weights.json");
+            Console.WriteLine($"Starting Aggregation Analysis (Output: {aggOutputPath})...");
+
+            // Only process the FIRST scenario
+            string scenario = weatherSequence.FirstOrDefault();
+            if (string.IsNullOrEmpty(scenario))
+            {
+                Console.WriteLine("Error: No weather scenario defined.");
+                return;
+            }
+
+            Console.WriteLine($"Aggregating for scenario: {scenario}");
+            ParseScenario(scenario, weatherFactors, activePonds, out int weatherId, out string periodKey, out double weatherWaterTemp, out double bottomTemp);
+
+            // Dictionary to hold aggregated results
+            // Key: (RoundedDepth, StructureMask, LayersSig) -> Index in result list
+            var aggregationMap = new Dictionary<string, AggregatedData>();
+            var resultList = new List<AggregatedData>();
+
+            long processedCount = 0;
+            Console.WriteLine("Iterating voxels for aggregation...");
+
+            for (int i = 0; i < voxelData.Length; i++)
+            {
+                long rawValue = voxelData[i];
+                long bitmask = rawValue;
+
+                if ((bitmask & 1) == 0) continue; // Skip non-water
+
+                int temp = i;
+                int z = temp % dimZ;
+                temp /= dimZ;
+                int depthIndex = temp % dimY;
+                int x = temp / dimY;
+
+                double waterDepth = 0.0;
+                if (depthData != null && depthDimensions != null)
+                {
+                    int depthIdx = x * depthDimensions[1] + z;
+                    if (depthIdx >= 0 && depthIdx < depthData.Length) waterDepth = depthData[depthIdx];
+                }
+                else
+                {
+                    int depthCm = (int)(rawValue >> 32);
+                    waterDepth = depthCm / 100.0;
+                }
+
+                double baitDepth = depthIndex * step[1];
+
+                // Calculate Conditions
+                double roundedDepth = Math.Round(baitDepth * 100) / 100.0; // Use Voxel Depth (BaitDepth)
+
+                // Get Layers
+                var layers = calculator.GetLayerTypes(baitDepth, waterDepth);
+                var sortedLayers = layers.OrderBy(l => l).ToList();
+                string layersSig = string.Join(",", sortedLayers);
+
+                string key = $"{roundedDepth}_{bitmask}_{layersSig}";
+
+                if (!aggregationMap.TryGetValue(key, out var aggData))
+                {
+                    aggData = new AggregatedData
+                    {
+                        Conditions = new ConditionKey
+                        {
+                            VoxelDepth = roundedDepth,
+                            StructureMask = bitmask,
+                            Layers = sortedLayers
+                        },
+                        Weights = new double[numSpecies],
+                        VoxelCount = 0
+                    };
+                    aggregationMap[key] = aggData;
+                    resultList.Add(aggData);
+                }
+
+                aggData.VoxelCount++;
+
+                // Sum Weights
+                for (int s = 0; s < numSpecies; s++)
+                {
+                    int fishEnvId = speciesList[s];
+                    var release = activeReleases.FirstOrDefault(r => r.FishEnvId == fishEnvId);
+                    if (release == null || !fishReleasesRaw.TryGetValue(release.ReleaseId.ToString(), out var fishRelease)) continue;
+
+                    double weight = calculator.CalculateWeight(
+                        fishEnvId, x, depthIndex, z,
+                        baitDepth, waterDepth, bitmask,
+                        weatherId, periodKey,
+                        fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
+                        weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ
+                    );
+
+                    aggData.Weights[s] += weight;
+                }
+
+                processedCount++;
+                if (processedCount % 50000 == 0) Console.Write($"\rAggregating... {processedCount}");
+            }
+
+            Console.WriteLine($"\nAggregation complete. Unique conditions: {resultList.Count}");
+
+            // Serialize
+            var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+            string jsonOutput = System.Text.Json.JsonSerializer.Serialize(resultList, options);
+            File.WriteAllText(aggOutputPath, jsonOutput);
+            Console.WriteLine("Saved aggregation results.");
+        }
+
+        private static void RunNormalPrecompute()
+        {
+            // --- NORMAL PRECOMPUTE MODE ---
+            string outputPath = Path.Combine(rootPath, "weights.bin");
+            Console.WriteLine($"Saving results to {outputPath}...");
+
+            // Debug CSV Writer
+            string csvPath = Path.Combine(rootPath, "depths_debug.csv");
+            Console.WriteLine($"Writing debug depths to {csvPath}...");
+
+            using (var debugWriter = new StreamWriter(csvPath))
+            using (var stream = File.Open(outputPath, FileMode.Create))
+            using (var writer = new BinaryWriter(stream))
+            {
+                debugWriter.WriteLine("WaterDepthMeters");
+
+                writer.Write(0x46495348); // Magic "FISH"
+                writer.Write(2); // Version 2
+                writer.Write(dimX);
+                writer.Write(dimY);
+                writer.Write(dimZ);
+                writer.Write(numSpecies);
+                writer.Write(weatherSequence.Count);
+
+                foreach (var sid in speciesList) writer.Write(sid);
+                foreach (var scen in weatherSequence) writer.Write(scen);
+
+                int scenarioIdx = 0;
+                foreach (var scenario in weatherSequence)
+                {
+                    Console.WriteLine($"\n--- Processing Scenario {scenarioIdx + 1}/{weatherSequence.Count}: {scenario} ---");
+                    ParseScenario(scenario, weatherFactors, activePonds, out int weatherId, out string periodKey, out double weatherWaterTemp, out double bottomTemp);
+
+                    int processedCount = 0;
+                    int debugCount = 0;
+
+                    long totalElements = totalVoxels * numSpecies;
+                    float[] resultData = new float[totalElements];
+
+                    for (int i = 0; i < voxelData.Length; i++)
+                    {
+                        long rawValue = voxelData[i];
+                        // New format: rawValue is pure flags (int64), depth is in separate file
+                        long bitmask = rawValue;
+
+                        if ((bitmask & 1) == 0) continue;
+
+                        int temp = i;
+                        int z = temp % dimZ;
+                        temp /= dimZ;
+                        int depthIndex = temp % dimY;
+                        int x = temp / dimY;
+
+                        // Get water depth from separate depth array
+                        double waterDepth = 0.0;
+                        if (depthData != null && depthDimensions != null)
+                        {
+                            // Depth data is 2D: [dimX, dimZ]
+                            int depthIdx = x * depthDimensions[1] + z;
+                            if (depthIdx >= 0 && depthIdx < depthData.Length)
+                            {
+                                waterDepth = depthData[depthIdx];
+                            }
+                        }
+                        else
+                        {
+                            // Fallback: Try old format (packed in high 32 bits) for backward compatibility
+                            int depthCm = (int)(rawValue >> 32);
+                            waterDepth = depthCm / 100.0;
+                        }
+
+                        // Debug: Write Depth (Only for first scenario to avoid duplicate IO)
+                        if (scenarioIdx == 0)
+                        {
+                            debugWriter.WriteLine(waterDepth);
+                        }
+
+                        double baitDepth = depthIndex * step[1];
+
+                        for (int s = 0; s < numSpecies; s++)
+                        {
+                            int fishEnvId = speciesList[s];
+                            var release = activeReleases.FirstOrDefault(r => r.FishEnvId == fishEnvId);
+                            if (release == null || !fishReleasesRaw.TryGetValue(release.ReleaseId.ToString(), out var fishRelease)) continue;
+
+                            bool doDebug = (debugCount < debugLimit && scenarioIdx == 0);
+                            double weight;
+
+                            if (doDebug)
+                            {
+                                string fishName = fishEnvAffinities.FirstOrDefault(f => f.Id == fishEnvId)?.Name ?? $"Unknown_{fishEnvId}";
+                                weight = calculator.CalculateWeightDebug(
+                                    fishEnvId, x, depthIndex, z,
+                                    baitDepth, waterDepth, bitmask,
+                                    weatherId, periodKey,
+                                    fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
+                                    weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ,
+                                    mapId, scenario, fishName, release.ReleaseId
+                                );
+                            }
+                            else
+                            {
+                                weight = calculator.CalculateWeight(
+                                    fishEnvId, x, depthIndex, z,
+                                    baitDepth, waterDepth, bitmask,
+                                    weatherId, periodKey,
+                                    fishRelease.ProbWeightIdeal, fishRelease.MinEnvCoeff,
+                                    weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ
+                                );
+                            }
+
+                            long flatIndex = ((long)x * dimY * dimZ + depthIndex * dimZ + z) * numSpecies + s;
+                            resultData[flatIndex] = (float)weight;
+                        }
+
+                        if (debugCount < debugLimit && scenarioIdx == 0)
+                        {
+                            debugCount++;
+                            Console.WriteLine("--------------------------------------------------");
+                        }
+                        processedCount++;
+                        if (processedCount % 50000 == 0) Console.Write($"\rCalc... {processedCount}/{totalVoxels}");
+                    }
+
+                    Console.WriteLine($"\nWriting {resultData.Length} floats for scenario {scenario}...");
+                    foreach (var val in resultData) writer.Write(val);
+
+                    scenarioIdx++;
+                }
+            }
+
+            var speciesMapping = speciesList.Select((id, index) => new
+            {
+                index = index,
+                fishEnvId = id,
+                name = fishEnvAffinities.FirstOrDefault(f => f.Id == id)?.Name ?? $"Unknown_{id}"
+            }).ToList();
+
+            string mappingJson = System.Text.Json.JsonSerializer.Serialize(speciesMapping, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            string mappingPath = Path.Combine(rootPath, "species_mapping.json");
+            File.WriteAllText(mappingPath, mappingJson);
+            Console.WriteLine($"Species mapping saved to: {mappingPath}");
+
+            Console.WriteLine("Done.");
         }
 
         private static void ParseScenario(string selectedScenario, List<WeatherFactor> weatherFactors, List<FishPond> activePonds,
@@ -416,5 +567,19 @@ namespace FishWeightPrecomputer
             }
             bottomTemp = (activePonds.FirstOrDefault()?.HypolimnionT ?? 100) / 10.0;
         }
+    }
+
+    public class AggregatedData
+    {
+        public ConditionKey Conditions { get; set; }
+        public double[] Weights { get; set; }
+        public int VoxelCount { get; set; }
+    }
+
+    public class ConditionKey
+    {
+        public double VoxelDepth { get; set; }
+        public long StructureMask { get; set; }
+        public List<int> Layers { get; set; }
     }
 }

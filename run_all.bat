@@ -7,7 +7,7 @@ echo ==========================================
 REM Navigate to the script's directory to ensure relative paths work
 cd /d "%~dp0"
 
-dotnet run --project src\FishWeightPrecomputer\FishWeightPrecomputer.csproj
+dotnet run --project src\FishWeightPrecomputer\FishWeightPrecomputer.csproj -- normal
 if %errorlevel% neq 0 (
     echo Error: Precompute failed.
     pause
