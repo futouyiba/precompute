@@ -251,7 +251,15 @@ namespace FishWeightPrecomputer
                 if (string.IsNullOrEmpty(modeInput))
                 {
                     Console.Write("Enter choice (default 1 / keywords: normal, aggregate): ");
-                    modeInput = Console.ReadLine().ToLower();
+                    try
+                    {
+                        modeInput = Console.ReadLine()?.ToLower();
+                    }
+                    catch
+                    {
+                        // Ignore console read errors
+                    }
+
                     if (modeInput == "normal") modeInput = "1";
                     else if (modeInput == "aggregate") modeInput = "2";
                 }

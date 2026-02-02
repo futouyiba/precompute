@@ -93,12 +93,20 @@ namespace FishWeightPrecomputer
             int releaseId
         )
         {
-            Console.WriteLine($"==================== 调试计算 ====================");
-            Console.WriteLine($"MapId={mapId}, Weather={weatherName}");
-            Console.WriteLine($"Species: {fishEnvId} ({fishName}) - Release: {releaseId} @ Voxel[{voxelX},{voxelY},{voxelZ}]");
-            Console.WriteLine($"BaitDepth={baitDepth:F2}m, MaxDepth(WaterDepth)={waterDepth:F2}m");
-            Console.WriteLine($"SurfaceTemp={weatherWaterTemp:F1}°C, BottomTemp={bottomTemp:F1}°C");
-            Console.WriteLine($"Bitmask={voxelBitmask} -> Structures: {GetHitStructNames(voxelBitmask)}");
+            Console.WriteLine($"输入数据（环境、条件变量）：");
+            Console.WriteLine($"MapId={mapId}");
+            Console.WriteLine($"Species={fishName}");
+            Console.WriteLine($"FishRelease={releaseId}");
+            Console.WriteLine($"BaitDepth={baitDepth}");
+            Console.WriteLine($"SurfaceTemp={weatherWaterTemp}");
+            Console.WriteLine($"BottomTemp={bottomTemp}");
+            Console.WriteLine($"Structures={voxelBitmask}");
+            Console.WriteLine($"Structures=[水下结构体]{GetHitStructNames(voxelBitmask)}");
+            Console.WriteLine($"MaxDepth={waterDepth}");
+            Console.WriteLine($"BaitDepth={baitDepth}");
+            Console.WriteLine($"Weather={weatherName}");
+
+            Console.WriteLine($"输出数据（需要核对的数据）：");
 
             if (!_fishEnvAffinities.TryGetValue(fishEnvId, out var fishAffinity))
             {
@@ -109,33 +117,39 @@ namespace FishWeightPrecomputer
             // 1. Temp Affinity
             double tempAffinity = CalculateTempAffinity(fishAffinity.TempId, baitDepth, waterDepth,
                 weatherWaterTemp, bottomTemp, waterMinZ, waterMaxZ);
-            Console.WriteLine($"1. TempAffinity (Id {fishAffinity.TempId}): {tempAffinity:F4}");
+
+            double fav = 0;
+            double threshold = 0;
             if (_tempAffinities.TryGetValue(fishAffinity.TempId, out var ta))
             {
-                Console.WriteLine($"   - Profile: Fav={ta.TemperatureFav / 10f}, Threshold={ta.TempThreshold}");
+                fav = ta.TemperatureFav / 10f;
+                threshold = ta.TempThreshold;
             }
 
             // 2. Struct Affinity
             double structAffinity = CalculateStructAffinity(fishAffinity.StructId, voxelBitmask);
-            Console.WriteLine($"2. StructAffinity (Id {fishAffinity.StructId}): {structAffinity:F4}");
 
             // 3. Layer Affinity
             double layerAffinity = CalculateLayerAffinity(fishAffinity.LayerId, baitDepth, waterDepth);
-            Console.WriteLine($"3. LayerAffinity (Id {fishAffinity.LayerId}): {layerAffinity:F4}");
 
             // 4. Weather Affinity
             double weatherAffinity = CalculateWeatherAffinity(weatherId, fishAffinity.PressureSensitivity);
-            Console.WriteLine($"4. WeatherAffinity: {weatherAffinity:F4}");
 
             // 5. Period Activity
             double periodActivity = CalculatePeriodActivity(fishAffinity.PeriodCoeffGroup, periodKey);
-            Console.WriteLine($"5. PeriodActivity: {periodActivity:F4}");
 
             double envCoeff = tempAffinity * structAffinity * layerAffinity * weatherAffinity * periodActivity;
-            Console.WriteLine($"Raw EnvCoeff: {envCoeff:F6}");
 
             envCoeff = Math.Max(envCoeff, minEnvCoeff);
-            Console.WriteLine($"Final EnvCoeff (Min {minEnvCoeff}): {envCoeff:F6}");
+
+            Console.WriteLine($"Final EnvCoeff={envCoeff}");
+            Console.WriteLine($"TempAffinity={tempAffinity}");
+            Console.WriteLine($"Fav={fav}");
+            Console.WriteLine($"Threshold={threshold}");
+            Console.WriteLine($"StructAffinity={structAffinity}");
+            Console.WriteLine($"LayerAffinity={layerAffinity}");
+            Console.WriteLine($"WeatherAffinity={weatherAffinity}");
+            Console.WriteLine($"PeriodActivity={periodActivity}");
 
             return baseWeight * envCoeff;
         }
